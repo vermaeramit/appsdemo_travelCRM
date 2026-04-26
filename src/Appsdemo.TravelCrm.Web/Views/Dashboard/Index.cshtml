@@ -1,0 +1,37 @@
+@model DashboardVm
+@{ ViewData["Title"] = "Dashboard"; }
+<div class="page-header">
+    <h2 class="page-title">Welcome to @Model.CompanyName</h2>
+    <small class="text-secondary">Plan: @Model.PlanName</small>
+</div>
+
+<div class="row row-cards">
+    <div class="col-md-3"><div class="card"><div class="card-body">
+        <div class="subheader">Leads (this month)</div>
+        <div class="h1 mb-0">@Model.LeadsThisMonth</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body">
+        <div class="subheader">Quotes (this month)</div>
+        <div class="h1 mb-0">@Model.QuotesThisMonth</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body">
+        <div class="subheader">Bookings (this month)</div>
+        <div class="h1 mb-0">@Model.BookingsThisMonth</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body">
+        <div class="subheader">Revenue (this month)</div>
+        <div class="h1 mb-0">@(Model.RevenueThisMonth.ToString("N0"))</div>
+    </div></div></div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h3 class="card-title">Get started</h3>
+        <ul>
+            <li>Create your first <strong>branch</strong> under Settings.</li>
+            <li>Invite users from the <a href="/users">Users</a> page.</li>
+            <li>Configure roles and permissions on the <a href="/roles">Roles</a> page.</li>
+            <li>Add destinations, hotels and suppliers under Master Data (coming soon).</li>
+        </ul>
+    </div>
+</div>

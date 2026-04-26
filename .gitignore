@@ -1,0 +1,23 @@
+## .NET / VS / Rider build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+.idea/
+
+## Logs & local data
+**/logs/
+**/App_Data/
+**/appsettings.Local.json
+**/appsettings.Development.local.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Secrets
+*.pfx
+*.key
+secrets.json

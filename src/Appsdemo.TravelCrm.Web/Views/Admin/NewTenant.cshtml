@@ -1,0 +1,80 @@
+@model CreateTenantVm
+@{ ViewData["Title"] = "New Tenant"; }
+<div class="page-header"><h2 class="page-title">Provision a new tenant</h2></div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        { <div>@err.ErrorMessage</div> }
+    </div>
+}
+
+<form method="post" action="/admin/tenants/new">
+    @Html.AntiForgeryToken()
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Company</h3></div>
+                <div class="card-body">
+                    <div class="mb-3"><label class="form-label">Tenant code (subdomain)</label>
+                        <input name="Code" value="@Model.Code" class="form-control" placeholder="acme" required/>
+                        <small class="form-hint">3–30 chars, lowercase letters/digits/hyphen. Used as subdomain and DB name suffix.</small>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Company name</label>
+                        <input name="CompanyName" value="@Model.CompanyName" class="form-control" required/></div>
+                    <div class="mb-3"><label class="form-label">Contact person</label>
+                        <input name="ContactPerson" value="@Model.ContactPerson" class="form-control" required/></div>
+                    <div class="row">
+                        <div class="col"><label class="form-label">Email</label>
+                            <input type="email" name="Email" value="@Model.Email" class="form-control" required/></div>
+                        <div class="col"><label class="form-label">Phone</label>
+                            <input name="Phone" value="@Model.Phone" class="form-control"/></div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col"><label class="form-label">Country</label>
+                            <input name="Country" value="@Model.Country" class="form-control"/></div>
+                        <div class="col"><label class="form-label">Timezone</label>
+                            <input name="Timezone" value="@Model.Timezone" class="form-control"/></div>
+                        <div class="col"><label class="form-label">Currency</label>
+                            <input name="CurrencyCode" value="@Model.CurrencyCode" class="form-control" maxlength="3"/></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Plan & first admin</h3></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Subscription plan</label>
+                        <select name="PlanId" class="form-select" required>
+                            @foreach (var p in Model.AvailablePlans)
+                            {
+                                <option value="@p.Id" selected="@(p.Id == Model.PlanId)">
+                                    @p.Name — ₹@p.PriceMonthly/mo · @(p.MaxUsers == 0 ? "Unlimited" : p.MaxUsers.ToString()) users · @p.TrialDays-day trial
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <hr/>
+                    <h4 class="mt-3">First tenant-admin user</h4>
+                    <div class="mb-3"><label class="form-label">Full name</label>
+                        <input name="AdminUserFullName" value="@Model.AdminUserFullName" class="form-control" required/></div>
+                    <div class="mb-3"><label class="form-label">Email</label>
+                        <input type="email" name="AdminUserEmail" value="@Model.AdminUserEmail" class="form-control" required/></div>
+                    <div class="mb-3"><label class="form-label">Initial password</label>
+                        <input type="text" name="AdminUserPassword" value="@Model.AdminUserPassword" class="form-control" required minlength="8"/>
+                        <small class="form-hint">User will be forced to change on first login.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-3">
+        <a href="/admin" class="btn me-2">Cancel</a>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-rocket me-1"></i>Provision tenant</button>
+    </div>
+</form>

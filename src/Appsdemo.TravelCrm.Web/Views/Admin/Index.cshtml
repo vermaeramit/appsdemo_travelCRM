@@ -1,0 +1,50 @@
+@model TenantListVm
+@{ ViewData["Title"] = "Tenants"; }
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col"><h2 class="page-title">Tenants</h2></div>
+        <div class="col-auto"><a href="/admin/tenants/new" class="btn btn-primary"><i class="ti ti-plus me-1"></i>New Tenant</a></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body border-bottom py-3">
+        <form method="get">
+            <div class="d-flex">
+                <input name="search" value="@Model.Search" class="form-control" placeholder="Search by company or code"/>
+                <button class="btn btn-outline-primary ms-2" type="submit">Search</button>
+            </div>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table card-table table-vcenter text-nowrap">
+            <thead>
+                <tr>
+                    <th>Code</th><th>Company</th><th>Email</th>
+                    <th>Plan</th><th>Status</th><th>Trial ends</th><th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Items.Any())
+            {
+                <tr><td colspan="7" class="text-center text-secondary py-4">No tenants yet. Create your first one.</td></tr>
+            }
+            @foreach (var t in Model.Items)
+            {
+                <tr>
+                    <td><span class="badge bg-blue-lt">@t.Code</span></td>
+                    <td>@t.CompanyName</td>
+                    <td><a href="mailto:@t.Email">@t.Email</a></td>
+                    <td>@t.PlanId.ToString().Substring(0,8)…</td>
+                    <td><span class="badge bg-@(t.Status == "Active" ? "success" : "warning")-lt">@t.Status</span></td>
+                    <td>@(t.TrialEndsOn?.ToString("yyyy-MM-dd"))</td>
+                    <td>@t.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex align-items-center">
+        <p class="m-0 text-secondary">Total: <strong>@Model.TotalCount</strong></p>
+    </div>
+</div>

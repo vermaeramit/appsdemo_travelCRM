@@ -1,0 +1,36 @@
+@model UserListVm
+@{ ViewData["Title"] = "Users"; }
+<div class="page-header"><h2 class="page-title">Users</h2></div>
+
+<div class="card">
+    <div class="card-body border-bottom py-3">
+        <form method="get">
+            <div class="d-flex">
+                <input name="search" value="@Model.Search" class="form-control" placeholder="Search by name, email, username"/>
+                <button class="btn btn-outline-primary ms-2" type="submit">Search</button>
+            </div>
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table card-table table-vcenter text-nowrap">
+            <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Active</th><th>Last login</th></tr></thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="5" class="text-center text-secondary py-4">No users yet.</td></tr>
+                }
+                @foreach (var u in Model.Items)
+                {
+                    <tr>
+                        <td>@u.FullName</td>
+                        <td>@u.Email</td>
+                        <td>@u.Username</td>
+                        <td>@(u.IsActive ? "Yes" : "No")</td>
+                        <td>@(u.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer text-secondary">Total: <strong>@Model.TotalCount</strong></div>
+</div>

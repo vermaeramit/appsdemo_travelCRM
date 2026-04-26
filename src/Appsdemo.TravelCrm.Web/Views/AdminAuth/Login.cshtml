@@ -1,0 +1,36 @@
+@model AdminLoginVm
+@{
+    Layout = "_LoginLayout";
+    ViewData["Title"] = "Super Admin · Sign in";
+    ViewData["Brand"] = "Appsdemo · Super Admin";
+}
+<form method="post" action="/admin/login" class="card card-md" autocomplete="off">
+    @Html.AntiForgeryToken()
+    <div class="card-body">
+        <h2 class="h2 text-center mb-4">Super Admin Login</h2>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger">
+                @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                { <div>@err.ErrorMessage</div> }
+            </div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="Email" value="@Model.Email" class="form-control" placeholder="you@@example.com" required autofocus/>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Password</label>
+            <input type="password" name="Password" class="form-control" placeholder="Your password" required/>
+        </div>
+        <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl"/>
+        <div class="form-footer">
+            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-login-2 me-1"></i>Sign in</button>
+        </div>
+    </div>
+</form>
+<div class="text-center text-secondary mt-3">
+    Not a super admin? <a href="/">Go to your tenant</a>
+</div>

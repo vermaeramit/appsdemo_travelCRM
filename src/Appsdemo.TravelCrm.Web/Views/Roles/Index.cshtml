@@ -1,0 +1,20 @@
+@model RoleListVm
+@{ ViewData["Title"] = "Roles"; }
+<div class="page-header"><h2 class="page-title">Roles & permissions</h2></div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table card-table table-vcenter text-nowrap">
+            <thead><tr><th>Role</th><th>Description</th><th>System</th></tr></thead>
+            <tbody>
+                @foreach (var r in Model.Items)
+                {
+                    <tr>
+                        <td><strong>@r.Name</strong></td>
+                        <td>@r.Description</td>
+                        <td>@(r.IsSystem ? "Yes" : "No")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

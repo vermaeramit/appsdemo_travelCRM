@@ -1,0 +1,25 @@
+@{
+    Layout = null;
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>@(ViewData["Title"] ?? "Sign in · Appsdemo")</title>
+    <link href="https://cdn.jsdelivr.net/npm/@@tabler/core@@1.0.0-beta20/dist/css/tabler.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@@3.19.0/dist/tabler-icons.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="~/css/app.css"/>
+</head>
+<body class="d-flex flex-column bg-light">
+<div class="page page-center">
+    <div class="container container-tight py-4">
+        <div class="text-center mb-4">
+            <h1 class="text-primary">@(ViewData["Brand"] ?? "Appsdemo Travel CRM")</h1>
+        </div>
+        @RenderBody()
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@@tabler/core@@1.0.0-beta20/dist/js/tabler.min.js"></script>
+</body>
+</html>
