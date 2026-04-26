@@ -7,6 +7,7 @@ using Appsdemo.TravelCrm.Data.Security;
 using Appsdemo.TravelCrm.Web.Authorization;
 using Appsdemo.TravelCrm.Web.Configuration;
 using Appsdemo.TravelCrm.Web.Middleware;
+using Appsdemo.TravelCrm.Web.Navigation;
 using Appsdemo.TravelCrm.Web.Services;
 using Hangfire;
 using Hangfire.Dashboard;
@@ -58,6 +59,8 @@ builder.Services.AddScoped<IGlobalUserRepository, GlobalUserRepository>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+
+builder.Services.AddSingleton<IMenuBuilder, MenuBuilder>();
 
 builder.Services.AddScoped<ITenantProvisioner, TenantProvisioner>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();

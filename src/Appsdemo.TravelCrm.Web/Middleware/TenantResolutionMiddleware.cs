@@ -166,9 +166,13 @@ public sealed class IsAdminHostMiddleware
     public async Task InvokeAsync(HttpContext ctx)
     {
         var host = ctx.Request.Host.Host;
-        var isAdminHost = host.Equals($"{_opt.AdminHost}.{_opt.RootDomain}",
+        var path = ctx.Request.Path.Value ?? "";
+        var isAdminBySubdomain = host.Equals($"{_opt.AdminHost}.{_opt.RootDomain}",
             StringComparison.OrdinalIgnoreCase);
-        ctx.Items["IsAdminHost"] = isAdminHost;
+        var isAdminByPath = path.StartsWith("/admin", StringComparison.OrdinalIgnoreCase)
+                            || path.Equals("/hangfire", StringComparison.OrdinalIgnoreCase)
+                            || path.StartsWith("/hangfire/", StringComparison.OrdinalIgnoreCase);
+        ctx.Items["IsAdminHost"] = isAdminBySubdomain || isAdminByPath;
         await _next(ctx);
     }
 }

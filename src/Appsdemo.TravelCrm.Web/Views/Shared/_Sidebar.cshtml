@@ -1,0 +1,67 @@
+@using Appsdemo.TravelCrm.Web.Navigation
+@model SidebarVm
+
+<aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <h1 class="navbar-brand navbar-brand-autodark">
+            <a href="@Model.BrandHref" class="d-flex align-items-center text-decoration-none">
+                <span class="brand-mark me-2">A</span>
+                <span class="brand-text">@Model.Brand</span>
+            </a>
+        </h1>
+
+        <div class="collapse navbar-collapse" id="sidebar-menu">
+            <ul class="navbar-nav pt-lg-3">
+                @foreach (var group in Model.Groups)
+                {
+                    if (!string.IsNullOrEmpty(group.Title))
+                    {
+                        <li class="nav-item">
+                            <span class="nav-link-title sidebar-section-title">@group.Title</span>
+                        </li>
+                    }
+
+                    foreach (var item in group.Items)
+                    {
+                        if (item.HasChildren)
+                        {
+                            <li class="nav-item dropdown @(item.IsActive ? "active" : "")">
+                                <a class="nav-link dropdown-toggle @(item.IsExpanded ? "show" : "")"
+                                   href="#" data-bs-toggle="dropdown" data-bs-auto-close="false"
+                                   role="button" aria-expanded="@(item.IsExpanded ? "true" : "false")">
+                                    <span class="nav-link-icon"><i class="@item.Icon"></i></span>
+                                    <span class="nav-link-title">@item.Label</span>
+                                </a>
+                                <div class="dropdown-menu @(item.IsExpanded ? "show" : "")">
+                                    <div class="dropdown-menu-columns">
+                                        <div class="dropdown-menu-column">
+                                            @foreach (var child in item.Children)
+                                            {
+                                                <a class="dropdown-item @(child.IsActive ? "active" : "")" href="@child.Url">
+                                                    <span class="nav-link-icon me-2"><i class="@child.Icon"></i></span>
+                                                    @child.Label
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item @(item.IsActive ? "active" : "")">
+                                <a class="nav-link" href="@item.Url">
+                                    <span class="nav-link-icon"><i class="@item.Icon"></i></span>
+                                    <span class="nav-link-title">@item.Label</span>
+                                </a>
+                            </li>
+                        }
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+</aside>

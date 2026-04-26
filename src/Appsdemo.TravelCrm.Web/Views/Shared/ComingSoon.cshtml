@@ -1,0 +1,21 @@
+@{
+    var title = ViewData["Title"]?.ToString() ?? "Coming soon";
+    var description = ViewData["Description"]?.ToString() ?? "This module is on the roadmap.";
+    var icon = ViewData["Icon"]?.ToString() ?? "ti ti-rocket";
+}
+<div class="page-header">
+    <h2 class="page-title">@title</h2>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="empty">
+            <div class="empty-icon"><i class="@icon" style="font-size: 3rem;"></i></div>
+            <p class="empty-title">@title — coming soon</p>
+            <p class="empty-subtitle text-secondary">@description</p>
+            <p class="empty-subtitle text-secondary mt-3">
+                <span class="badge bg-azure-lt">Schema ready</span>
+                <span class="badge bg-yellow-lt ms-1">UI in progress</span>
+            </p>
+        </div>
+    </div>
+</div>

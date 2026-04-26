@@ -1,0 +1,35 @@
+@using Appsdemo.TravelCrm.Web.Navigation
+@model TopbarVm
+@{
+    var initial = string.IsNullOrEmpty(Model.UserName) ? "?" : Model.UserName.Substring(0, 1).ToUpperInvariant();
+    var logoutHref = Model.IsAdminHost ? "/admin/logout" : Model.TenantBase + "/auth/logout";
+    var subtitle = Model.IsAdminHost ? "Super Admin" : "Tenant User";
+}
+<header class="navbar navbar-expand-md d-print-none topbar">
+    <div class="container-xl">
+        <div class="navbar-nav flex-row order-md-last">
+            @if (!string.IsNullOrEmpty(Model.PlanName))
+            {
+                <span class="nav-item d-none d-md-inline-flex align-items-center me-3 badge bg-primary-lt">
+                    <i class="ti ti-rocket me-1"></i>@Model.PlanName
+                </span>
+            }
+            <button id="theme-toggle" type="button" class="btn btn-icon btn-ghost-secondary me-2" title="Toggle theme">
+                <i class="ti ti-sun theme-icon-light"></i>
+                <i class="ti ti-moon theme-icon-dark d-none"></i>
+            </button>
+            <div class="nav-item dropdown">
+                <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
+                    <span class="avatar avatar-sm bg-primary-lt">@initial</span>
+                    <div class="d-none d-xl-block ps-2">
+                        <div>@Model.UserName</div>
+                        <div class="mt-1 small text-secondary">@subtitle</div>
+                    </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <a href="@logoutHref" class="dropdown-item"><i class="ti ti-logout me-2"></i>Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
