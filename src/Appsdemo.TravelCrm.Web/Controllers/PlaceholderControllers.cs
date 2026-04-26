@@ -16,14 +16,6 @@ public abstract class PlaceholderController : Controller
     }
 }
 
-[Authorize, Route("leads")]
-public sealed class LeadsController : PlaceholderController
-{
-    [HttpGet(""), HasPermission(Permissions.Leads.View), RequireFeature(Features.ModuleCrm)]
-    public IActionResult Index() => ComingSoon("Leads",
-        "Capture, qualify and follow up on inbound enquiries.", "ti ti-target-arrow");
-}
-
 [Authorize, Route("quotes")]
 public sealed class QuotesController : PlaceholderController
 {

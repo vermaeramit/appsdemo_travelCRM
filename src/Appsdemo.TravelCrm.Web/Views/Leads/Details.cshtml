@@ -1,0 +1,156 @@
+@model LeadDetailsVm
+@{
+    var l = Model.Lead;
+    ViewData["Title"] = $"Lead {l.LeadNo}";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var canEdit = User.HasClaim("perm", Permissions.Leads.Edit) || User.IsInRole(SystemRoles.TenantAdmin);
+    var canDelete = User.HasClaim("perm", Permissions.Leads.Delete) || User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="text-secondary"><a href="@pathBase/leads" class="text-reset"><i class="ti ti-arrow-left me-1"></i>Back to leads</a></div>
+            <h2 class="page-title mt-1">
+                <span class="badge bg-@(LeadStatus.BadgeColor(l.Status))-lt me-2">@l.Status</span>
+                @l.LeadNo · @l.CustomerName
+            </h2>
+        </div>
+        <div class="col-auto">
+            @if (canEdit)
+            {
+                <a href="@pathBase/leads/@l.Id/edit" class="btn btn-outline-primary">
+                    <i class="ti ti-pencil me-1"></i>Edit
+                </a>
+            }
+            @if (canDelete)
+            {
+                <form method="post" action="@pathBase/leads/@l.Id/delete" class="d-inline ms-2"
+                      onsubmit="return confirm('Delete this lead? This cannot be undone.');">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-danger" type="submit"><i class="ti ti-trash me-1"></i>Delete</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-header"><h3 class="card-title">Lead details</h3></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-2"><span class="text-secondary">Email:</span> @(string.IsNullOrEmpty(l.Email) ? "—" : l.Email)</div>
+                        <div class="mb-2"><span class="text-secondary">Phone:</span> @(string.IsNullOrEmpty(l.Phone) ? "—" : l.Phone)</div>
+                        <div class="mb-2"><span class="text-secondary">Source:</span> @(l.Source ?? "—")</div>
+                        <div class="mb-2"><span class="text-secondary">Branch:</span> @(Model.BranchName ?? "—")</div>
+                        <div class="mb-2"><span class="text-secondary">Assigned to:</span> @(Model.AssignedToName ?? "—")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-2"><span class="text-secondary">Travel date:</span> @(l.TravelDate?.ToString("yyyy-MM-dd") ?? "—")</div>
+                        <div class="mb-2"><span class="text-secondary">Nights:</span> @(l.TravelNights?.ToString() ?? "—")</div>
+                        <div class="mb-2"><span class="text-secondary">Pax:</span> @l.PaxAdults adults · @l.PaxChildren children</div>
+                        <div class="mb-2"><span class="text-secondary">Budget:</span> @(l.Budget.HasValue ? $"{l.CurrencyCode} {l.Budget:N0}" : "—")</div>
+                        <div class="mb-2"><span class="text-secondary">Created:</span> @l.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(l.Notes))
+                {
+                    <hr/>
+                    <div class="text-secondary mb-1">Notes</div>
+                    <div>@l.Notes</div>
+                }
+                @if (l.Status == LeadStatus.Lost && !string.IsNullOrWhiteSpace(l.LostReason))
+                {
+                    <hr/>
+                    <div class="text-secondary mb-1">Lost reason</div>
+                    <div class="text-red">@l.LostReason</div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Follow-ups (@Model.Followups.Count)</h3></div>
+            <div class="card-body">
+                @if (Model.Followups.Count == 0)
+                {
+                    <div class="empty py-3">
+                        <p class="empty-title">No follow-ups yet</p>
+                        <p class="empty-subtitle text-secondary">Use the form on the right to log a call, email, or meeting.</p>
+                    </div>
+                }
+                else
+                {
+                    <ul class="timeline">
+                        @foreach (var f in Model.Followups)
+                        {
+                            <li class="timeline-event">
+                                <div class="timeline-event-icon bg-primary-lt">
+                                    <i class="ti ti-phone"></i>
+                                </div>
+                                <div class="card timeline-event-card">
+                                    <div class="card-body">
+                                        <div class="d-flex">
+                                            <div>
+                                                <strong>@f.Mode</strong>
+                                                <span class="text-secondary ms-2">@f.FollowupDate.ToString("yyyy-MM-dd HH:mm")</span>
+                                            </div>
+                                            <div class="ms-auto text-secondary">@(f.DoneByName ?? "—")</div>
+                                        </div>
+                                        <div class="mt-1">@f.Notes</div>
+                                        @if (f.NextFollowupDate.HasValue)
+                                        {
+                                            <div class="mt-2 small text-secondary">
+                                                <i class="ti ti-bell me-1"></i>
+                                                Next follow-up: <strong>@f.NextFollowupDate.Value.ToString("yyyy-MM-dd HH:mm")</strong>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Add follow-up</h3></div>
+            <form method="post" action="@pathBase/leads/@l.Id/followups">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="LeadId" value="@l.Id"/>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label required">When</label>
+                        <input type="datetime-local" name="FollowupDate"
+                               value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"
+                               class="form-control" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">Mode</label>
+                        <select name="Mode" class="form-select">
+                            @foreach (var m in FollowupMode.All)
+                            { <option value="@m">@m</option> }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">Notes</label>
+                        <textarea name="Notes" rows="3" class="form-control" maxlength="2000" required
+                                  placeholder="What was discussed?"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Next follow-up</label>
+                        <input type="datetime-local" name="NextFollowupDate" class="form-control"/>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <button class="btn btn-primary" type="submit"><i class="ti ti-plus me-1"></i>Add follow-up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

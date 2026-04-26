@@ -4,6 +4,7 @@ using Appsdemo.TravelCrm.Data.Connection;
 using Appsdemo.TravelCrm.Data.Repositories.Master;
 using Appsdemo.TravelCrm.Data.Repositories.Tenant;
 using Appsdemo.TravelCrm.Data.Security;
+using Appsdemo.TravelCrm.Data.Services;
 using Appsdemo.TravelCrm.Web.Authorization;
 using Appsdemo.TravelCrm.Web.Configuration;
 using Appsdemo.TravelCrm.Web.Middleware;
@@ -59,6 +60,9 @@ builder.Services.AddScoped<IGlobalUserRepository, GlobalUserRepository>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IBranchRepository, BranchRepository>();
+builder.Services.AddScoped<ILeadRepository, LeadRepository>();
+builder.Services.AddScoped<INumberSequenceService, NumberSequenceService>();
 
 builder.Services.AddSingleton<IMenuBuilder, MenuBuilder>();
 
