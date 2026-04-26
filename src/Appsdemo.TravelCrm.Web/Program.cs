@@ -159,12 +159,11 @@ else
     app.UseExceptionHandler("/error");
     app.UseHsts();
 }
-app.UseStaticFiles();
-app.UseRouting();
-
 app.UseMiddleware<IsAdminHostMiddleware>();
 app.UseMiddleware<TenantResolutionMiddleware>();
 
+app.UseStaticFiles();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 

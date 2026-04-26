@@ -10,7 +10,7 @@ Multi-tenant Travel CRM / ERP built on **ASP.NET Core 8 + Dapper + PostgreSQL**.
 ## 1. Prerequisites
 
 - **.NET 8 SDK** (or .NET 9 — the projects target net8.0).
-- **PostgreSQL 14+** running locally on `localhost:5432` with the `postgres` user (default password `postgres`). Adjust in `appsettings.json` → `ConnectionStrings`.
+- **PostgreSQL 17** running locally on `localhost:5432` with the `postgres` user (default password `postgres`). Adjust in `appsettings.json` -> `ConnectionStrings` if your password is different.
 - (Optional) `psql` on PATH for inspecting databases.
 
 ## 2. Solution layout
@@ -85,10 +85,10 @@ The migration project can also be run as a CLI:
 
 ```bash
 # Master DB
-dotnet run --project src/Appsdemo.TravelCrm.Migrations -- master "Host=localhost;Database=appsdemo_master;Username=postgres;Password=postgres"
+dotnet run --project src/Appsdemo.TravelCrm.Migrations -- master "Host=localhost;Port=5432;Database=appsdemo_master;Username=postgres;Password=postgres"
 
 # A specific tenant
-dotnet run --project src/Appsdemo.TravelCrm.Migrations -- tenant "Host=localhost;Database=appsdemo_acme;Username=postgres;Password=postgres"
+dotnet run --project src/Appsdemo.TravelCrm.Migrations -- tenant "Host=localhost;Port=5432;Database=appsdemo_acme;Username=postgres;Password=postgres"
 ```
 
 ## 9. v1 module roadmap

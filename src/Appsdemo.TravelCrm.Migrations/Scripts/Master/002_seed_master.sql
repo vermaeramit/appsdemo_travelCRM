@@ -30,7 +30,7 @@ ON CONFLICT (name) DO NOTHING;
 INSERT INTO plan_features (plan_id, feature_key, feature_value)
 SELECT p.id, f.key, f.val
 FROM subscription_plans p
-CROSS JOIN (VALUES
+JOIN (VALUES
     ('Starter',    'module.crm',        'true'),
     ('Starter',    'module.quotes',     'true'),
     ('Starter',    'module.reports',    'true'),

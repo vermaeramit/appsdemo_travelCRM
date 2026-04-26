@@ -3,8 +3,9 @@
     Layout = "_LoginLayout";
     ViewData["Title"] = "Sign in";
     ViewData["Brand"] = $"Appsdemo · {(Model.TenantCode ?? "")}";
+    var loginAction = $"{Context.Request.PathBase}/auth/login";
 }
-<form method="post" action="/auth/login" class="card card-md" autocomplete="off">
+<form method="post" action="@loginAction" class="card card-md" autocomplete="off">
     @Html.AntiForgeryToken()
     <div class="card-body">
         <h2 class="h2 text-center mb-4">Sign in</h2>

@@ -4,6 +4,7 @@
     var brand = isAdminHost ? "Appsdemo · Super Admin" : (tenant?.CompanyName ?? "Appsdemo Travel CRM");
     var userName = Context.User?.Identity?.IsAuthenticated == true ? Context.User.Identity.Name : null;
     var planName = tenant?.PlanName;
+    var tenantBase = Context.Request.PathBase.Value ?? "";
 }
 <!doctype html>
 <html lang="en">
@@ -48,7 +49,7 @@
                             }
                             else
                             {
-                                <a href="/auth/logout" class="dropdown-item"><i class="ti ti-logout me-2"></i>Logout</a>
+                                <a href="@tenantBase/auth/logout" class="dropdown-item"><i class="ti ti-logout me-2"></i>Logout</a>
                             }
                         </div>
                     </div>
@@ -69,9 +70,9 @@
                             }
                             else
                             {
-                                <li class="nav-item"><a class="nav-link" href="/"><i class="ti ti-dashboard me-2"></i>Dashboard</a></li>
-                                <li class="nav-item"><a class="nav-link" href="/users"><i class="ti ti-users me-2"></i>Users</a></li>
-                                <li class="nav-item"><a class="nav-link" href="/roles"><i class="ti ti-shield-lock me-2"></i>Roles</a></li>
+                                <li class="nav-item"><a class="nav-link" href="@tenantBase/"><i class="ti ti-dashboard me-2"></i>Dashboard</a></li>
+                                <li class="nav-item"><a class="nav-link" href="@tenantBase/users"><i class="ti ti-users me-2"></i>Users</a></li>
+                                <li class="nav-item"><a class="nav-link" href="@tenantBase/roles"><i class="ti ti-shield-lock me-2"></i>Roles</a></li>
                             }
                         </ul>
                     </div>

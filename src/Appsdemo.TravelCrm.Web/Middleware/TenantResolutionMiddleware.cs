@@ -43,7 +43,7 @@ public sealed class TenantResolutionMiddleware
             return;
         }
 
-        var code = ResolveTenantCode(ctx, path);
+        var code = ResolveTenantCode(ctx, path, out var pathPrefix);
         if (string.IsNullOrWhiteSpace(code))
         {
             await _next(ctx);
@@ -85,11 +85,35 @@ public sealed class TenantResolutionMiddleware
 
         accessor.Current = tenant;
         ctx.Items["Tenant"] = tenant;
+
+        if (pathPrefix.HasValue)
+        {
+            var originalPath = ctx.Request.Path;
+            var originalPathBase = ctx.Request.PathBase;
+            ctx.Request.PathBase = originalPathBase.Add(pathPrefix.Value);
+            ctx.Request.Path = originalPath.StartsWithSegments(pathPrefix.Value, out var remaining)
+                ? remaining
+                : originalPath;
+
+            try
+            {
+                await _next(ctx);
+            }
+            finally
+            {
+                ctx.Request.Path = originalPath;
+                ctx.Request.PathBase = originalPathBase;
+            }
+
+            return;
+        }
+
         await _next(ctx);
     }
 
-    private string? ResolveTenantCode(HttpContext ctx, string path)
+    private string? ResolveTenantCode(HttpContext ctx, string path, out PathString? pathPrefix)
     {
+        pathPrefix = null;
         var host = ctx.Request.Host.Host;
         var rootDomain = _opt.RootDomain;
 
@@ -112,7 +136,11 @@ public sealed class TenantResolutionMiddleware
             var rest = path.Substring(3);
             var slash = rest.IndexOf('/');
             var code = slash >= 0 ? rest.Substring(0, slash) : rest;
-            if (!string.IsNullOrWhiteSpace(code)) return code.ToLowerInvariant();
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                pathPrefix = new PathString($"/t/{code}");
+                return code.ToLowerInvariant();
+            }
         }
 
         // Dev fallback

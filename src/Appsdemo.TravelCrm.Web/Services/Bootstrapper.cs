@@ -47,12 +47,22 @@ public sealed class Bootstrapper : IBootstrapper
     {
         if (string.IsNullOrWhiteSpace(_saOpt.Email)) return;
         using var conn = _master.Open();
-        var exists = await conn.ExecuteScalarAsync<int>(
-            "SELECT COUNT(*) FROM global_users WHERE LOWER(email) = LOWER(@email)",
-            new { _saOpt.Email });
-        if (exists > 0) return;
-
         var hash = _hasher.Hash(_saOpt.InitialPassword);
+        var updated = await conn.ExecuteAsync(@"
+            UPDATE global_users
+            SET full_name = @FullName,
+                password_hash = @hash,
+                is_active = TRUE,
+                failed_login_count = 0,
+                locked_until = NULL
+            WHERE LOWER(email) = LOWER(@Email)",
+            new { _saOpt.Email, _saOpt.FullName, hash });
+        if (updated > 0)
+        {
+            _log.LogInformation("Updated super-admin {Email}", _saOpt.Email);
+            return;
+        }
+
         await conn.ExecuteAsync(@"
             INSERT INTO global_users (email, full_name, password_hash, is_active)
             VALUES (LOWER(@Email), @FullName, @hash, TRUE)",

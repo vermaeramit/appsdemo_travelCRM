@@ -4,14 +4,14 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE features (
+CREATE TABLE IF NOT EXISTS features (
     key           VARCHAR(100) PRIMARY KEY,
     display_name  VARCHAR(150) NOT NULL,
     category      VARCHAR(50)  NOT NULL,
     description   TEXT
 );
 
-CREATE TABLE subscription_plans (
+CREATE TABLE IF NOT EXISTS subscription_plans (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name          VARCHAR(50)  NOT NULL UNIQUE,
     description   TEXT,
@@ -24,7 +24,7 @@ CREATE TABLE subscription_plans (
     sort_order    INT NOT NULL DEFAULT 0
 );
 
-CREATE TABLE plan_features (
+CREATE TABLE IF NOT EXISTS plan_features (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     plan_id       UUID NOT NULL REFERENCES subscription_plans(id) ON DELETE CASCADE,
     feature_key   VARCHAR(100) NOT NULL REFERENCES features(key),
@@ -32,7 +32,7 @@ CREATE TABLE plan_features (
     UNIQUE (plan_id, feature_key)
 );
 
-CREATE TABLE tenants (
+CREATE TABLE IF NOT EXISTS tenants (
     id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code                     VARCHAR(50)  NOT NULL UNIQUE,
     company_name             VARCHAR(200) NOT NULL,
@@ -57,9 +57,9 @@ CREATE TABLE tenants (
     created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_by               UUID
 );
-CREATE INDEX ix_tenants_status ON tenants(status);
+CREATE INDEX IF NOT EXISTS ix_tenants_status ON tenants(status);
 
-CREATE TABLE global_users (
+CREATE TABLE IF NOT EXISTS global_users (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email               VARCHAR(150) NOT NULL UNIQUE,
     full_name           VARCHAR(150) NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE global_users (
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE tenant_subscriptions_history (
+CREATE TABLE IF NOT EXISTS tenant_subscriptions_history (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id         UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     plan_id           UUID NOT NULL REFERENCES subscription_plans(id),
@@ -86,7 +86,7 @@ CREATE TABLE tenant_subscriptions_history (
     created_by        UUID
 );
 
-CREATE TABLE tenant_invoices (
+CREATE TABLE IF NOT EXISTS tenant_invoices (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id       UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     invoice_no      VARCHAR(40) NOT NULL UNIQUE,
@@ -100,7 +100,7 @@ CREATE TABLE tenant_invoices (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE audit_log_global (
+CREATE TABLE IF NOT EXISTS audit_log_global (
     id           BIGSERIAL PRIMARY KEY,
     actor_id     UUID,
     actor_email  VARCHAR(150),
@@ -112,4 +112,4 @@ CREATE TABLE audit_log_global (
     user_agent   TEXT,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX ix_audit_log_global_created ON audit_log_global(created_at DESC);
+CREATE INDEX IF NOT EXISTS ix_audit_log_global_created ON audit_log_global(created_at DESC);

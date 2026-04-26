@@ -102,14 +102,20 @@ public sealed class AuthController : Controller
 
         await _audit.WriteAsync("user.login", "users", user.Id.ToString(), null);
 
-        return Redirect(string.IsNullOrWhiteSpace(vm.ReturnUrl) ? "/" : vm.ReturnUrl);
+        var home = HttpContext.Request.PathBase.HasValue
+            ? $"{HttpContext.Request.PathBase}/"
+            : "/";
+        return Redirect(string.IsNullOrWhiteSpace(vm.ReturnUrl) ? home : vm.ReturnUrl);
     }
 
     [HttpGet("logout")]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return RedirectToAction(nameof(Login));
+        var loginPath = HttpContext.Request.PathBase.HasValue
+            ? $"{HttpContext.Request.PathBase}/auth/login"
+            : "/auth/login";
+        return Redirect(loginPath);
     }
 
     [HttpGet("denied")]

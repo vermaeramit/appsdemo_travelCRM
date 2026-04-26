@@ -90,7 +90,7 @@ public sealed class TenantRepository : ITenantRepository
                 plan_id, status, trial_ends_on, subscription_starts_on, subscription_ends_on,
                 max_users, logo_path, created_at, created_by
             ) VALUES (
-                COALESCE(@Id, gen_random_uuid()), LOWER(@Code), @CompanyName, @ContactPerson, @Email, @Phone, @Country, @Timezone,
+                COALESCE(NULLIF(@Id, '00000000-0000-0000-0000-000000000000'), gen_random_uuid()), LOWER(@Code), @CompanyName, @ContactPerson, @Email, @Phone, @Country, @Timezone,
                 @CurrencyCode, @DbName, @DbHost, @DbPort, @DbUser, @DbPasswordEncrypted,
                 @PlanId, @Status, @TrialEndsOn, @SubscriptionStartsOn, @SubscriptionEndsOn,
                 @MaxUsers, @LogoPath, NOW(), @CreatedBy
