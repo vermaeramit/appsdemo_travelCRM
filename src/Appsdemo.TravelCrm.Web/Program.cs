@@ -20,6 +20,10 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Local-only overrides: appsettings.Local.json is gitignored.
+// Use it for dev DB passwords, secrets, etc. — never commit.
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 // ---- Logging
 builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)

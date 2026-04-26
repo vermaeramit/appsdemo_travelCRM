@@ -13,6 +13,9 @@ obj/
 **/appsettings.Local.json
 **/appsettings.Development.local.json
 
+## Local tooling
+.claude/
+
 ## OS
 .DS_Store
 Thumbs.db

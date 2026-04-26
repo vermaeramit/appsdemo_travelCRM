@@ -10,7 +10,18 @@ Multi-tenant Travel CRM / ERP built on **ASP.NET Core 8 + Dapper + PostgreSQL**.
 ## 1. Prerequisites
 
 - **.NET 8 SDK** (or .NET 9 — the projects target net8.0).
-- **PostgreSQL 17** running locally on `localhost:5432` with the `postgres` user (default password `postgres`). Adjust in `appsettings.json` -> `ConnectionStrings` if your password is different.
+- **PostgreSQL 17** running locally on `localhost:5432` with the `postgres` user (default password `postgres`). If your password is different, **do NOT edit `appsettings.json`** — create `src/Appsdemo.TravelCrm.Web/appsettings.Local.json` (gitignored) with your overrides:
+  ```json
+  {
+    "ConnectionStrings": {
+      "Master": "Host=localhost;Port=5432;Database=appsdemo_master;Username=postgres;Password=YOUR_PASSWORD",
+      "PgAdmin": "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=YOUR_PASSWORD",
+      "HangfirePg": "Host=localhost;Port=5432;Database=appsdemo_hangfire;Username=postgres;Password=YOUR_PASSWORD"
+    },
+    "Tenancy": { "TenantDbPassword": "YOUR_PASSWORD" },
+    "SuperAdmin": { "Email": "you@example.com", "FullName": "Your Name", "InitialPassword": "Pick-a-strong-one" }
+  }
+  ```
 - (Optional) `psql` on PATH for inspecting databases.
 
 ## 2. Solution layout
