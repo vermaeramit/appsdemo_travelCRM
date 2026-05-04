@@ -62,6 +62,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IBranchRepository, BranchRepository>();
 builder.Services.AddScoped<ILeadRepository, LeadRepository>();
+builder.Services.AddScoped<IQuoteRepository, QuoteRepository>();
 builder.Services.AddScoped<INumberSequenceService, NumberSequenceService>();
 
 builder.Services.AddSingleton<IMenuBuilder, MenuBuilder>();

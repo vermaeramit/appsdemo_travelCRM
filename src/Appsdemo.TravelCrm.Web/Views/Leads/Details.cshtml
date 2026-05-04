@@ -16,7 +16,13 @@
                 @l.LeadNo · @l.CustomerName
             </h2>
         </div>
-        <div class="col-auto">
+        <div class="col-auto d-flex gap-2 flex-wrap">
+            @if (User.HasClaim("perm", Permissions.Quotes.Create) || User.IsInRole(SystemRoles.TenantAdmin))
+            {
+                <a href="@pathBase/quotes/new?leadId=@l.Id" class="btn btn-primary">
+                    <i class="ti ti-file-invoice me-1"></i>Create Quote
+                </a>
+            }
             @if (canEdit)
             {
                 <a href="@pathBase/leads/@l.Id/edit" class="btn btn-outline-primary">

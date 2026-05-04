@@ -16,14 +16,6 @@ public abstract class PlaceholderController : Controller
     }
 }
 
-[Authorize, Route("quotes")]
-public sealed class QuotesController : PlaceholderController
-{
-    [HttpGet(""), HasPermission(Permissions.Quotes.View), RequireFeature(Features.ModuleQuotes)]
-    public IActionResult Index() => ComingSoon("Quotes",
-        "Build itinerary cost sheets, version them, and send PDFs.", "ti ti-file-invoice");
-}
-
 [Authorize, Route("bookings")]
 public sealed class BookingsController : PlaceholderController
 {

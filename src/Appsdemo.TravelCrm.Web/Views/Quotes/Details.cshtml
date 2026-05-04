@@ -1,0 +1,318 @@
+﻿@model QuoteDetailsVm
+@{
+    var q = Model.Quote;
+    ViewData["Title"] = $"Quote {q.QuoteNo}";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="text-secondary"><a href="@pathBase/quotes" class="text-reset"><i class="ti ti-arrow-left me-1"></i>Back to quotes</a></div>
+            <h2 class="page-title mt-1">
+                <span class="badge bg-@(QuoteStatus.BadgeColor(q.Status))-lt me-2">@q.Status</span>
+                @q.QuoteNo
+                @if (!string.IsNullOrEmpty(q.CustomerName))
+                {
+                    <span class="text-secondary fw-normal fs-3 ms-2">· @q.CustomerName</span>
+                }
+            </h2>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            @if (Model.CanEdit && q.Status == QuoteStatus.Draft)
+            {
+                <a href="@pathBase/quotes/@q.Id/edit" class="btn btn-outline-primary">
+                    <i class="ti ti-pencil me-1"></i>Edit
+                </a>
+            }
+
+            @if (Model.CanSend && q.Status == QuoteStatus.Draft)
+            {
+                <form method="post" action="@pathBase/quotes/@q.Id/status" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="status" value="Sent"/>
+                    <button class="btn btn-primary" type="submit"><i class="ti ti-send me-1"></i>Mark as Sent</button>
+                </form>
+            }
+
+            @if (Model.CanApprove && q.Status == QuoteStatus.Sent)
+            {
+                <form method="post" action="@pathBase/quotes/@q.Id/status" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="status" value="Approved"/>
+                    <button class="btn btn-success" type="submit"><i class="ti ti-check me-1"></i>Approve</button>
+                </form>
+                <form method="post" action="@pathBase/quotes/@q.Id/status" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="status" value="Rejected"/>
+                    <button class="btn btn-outline-danger" type="submit"><i class="ti ti-x me-1"></i>Reject</button>
+                </form>
+            }
+
+            @if (Model.CanDelete && (q.Status == QuoteStatus.Draft || q.Status == QuoteStatus.Rejected))
+            {
+                <form method="post" action="@pathBase/quotes/@q.Id/delete" class="d-inline"
+                      onsubmit="return confirm('Delete this quote?');">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-outline-danger" type="submit"><i class="ti ti-trash me-1"></i>Delete</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-3">
+    @* Left: details + items *@
+    <div class="col-lg-8">
+
+        @* Quote header info *@
+        <div class="card mb-3">
+            <div class="card-header"><h3 class="card-title">Quote Details</h3></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-2"><span class="text-secondary">Customer:</span> <strong>@(q.CustomerName ?? "—")</strong></div>
+                        @if (!string.IsNullOrEmpty(Model.LeadNo))
+                        {
+                            <div class="mb-2">
+                                <span class="text-secondary">Lead:</span>
+                                <a href="@pathBase/leads/@q.LeadId">@Model.LeadNo</a>
+                            </div>
+                        }
+                        <div class="mb-2"><span class="text-secondary">Currency:</span> @q.CurrencyCode</div>
+                        <div class="mb-2"><span class="text-secondary">Branch:</span> @(Model.BranchName ?? "—")</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-2"><span class="text-secondary">Version:</span> v@q.Version</div>
+                        <div class="mb-2">
+                            <span class="text-secondary">Valid Till:</span>
+                            @if (q.ValidTill.HasValue)
+                            {
+                                var expired = q.ValidTill.Value < DateOnly.FromDateTime(DateTime.Today)
+                                              && q.Status != QuoteStatus.Approved && q.Status != QuoteStatus.Won;
+                                <span class="@(expired ? "text-danger fw-bold" : "")">
+                                    @q.ValidTill.Value.ToString("yyyy-MM-dd")
+                                    @if (expired) { <small>(Expired)</small> }
+                                </span>
+                            }
+                            else { <span>—</span> }
+                        </div>
+                        <div class="mb-2"><span class="text-secondary">Created:</span> @q.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                        @if (q.UpdatedAt.HasValue)
+                        {
+                            <div class="mb-2"><span class="text-secondary">Updated:</span> @q.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</div>
+                        }
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(q.Notes))
+                {
+                    <hr/>
+                    <div class="text-secondary mb-1">Internal Notes</div>
+                    <div class="text-secondary">@q.Notes</div>
+                }
+            </div>
+        </div>
+
+        @* Line Items *@
+        <div class="card mb-3">
+            <div class="card-header"><h3 class="card-title">Itinerary Items (@q.Items.Count)</h3></div>
+            @if (q.Items.Count == 0)
+            {
+                <div class="card-body">
+                    <div class="empty py-3">
+                        <p class="empty-title">No items</p>
+                        <p class="empty-subtitle text-secondary">Edit the quote to add itinerary items.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table card-table table-vcenter">
+                        <thead>
+                            <tr>
+                                <th style="width:50px">Day</th>
+                                <th style="width:110px">Date</th>
+                                <th style="width:120px">Type</th>
+                                <th>Description</th>
+                                <th class="text-end" style="width:70px">Qty</th>
+                                <th class="text-end" style="width:100px">Unit Cost</th>
+                                <th class="text-end" style="width:100px">Unit Sale</th>
+                                <th class="text-end" style="width:70px">Tax%</th>
+                                <th class="text-end" style="width:110px">Line Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var lastDay = -1;
+                            }
+                            @foreach (var item in q.Items)
+                            {
+                                if (item.DayNo.HasValue && item.DayNo.Value != lastDay)
+                                {
+                                    lastDay = item.DayNo.Value;
+                                    <tr class="table-active">
+                                        <td colspan="9" class="fw-medium text-secondary small py-1">
+                                            <i class="ti ti-sun me-1"></i>Day @item.DayNo
+                                            @if (item.ItemDate.HasValue) { <span class="ms-2">(@item.ItemDate.Value.ToString("yyyy-MM-dd"))</span> }
+                                        </td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="text-secondary">@(item.DayNo?.ToString() ?? "—")</td>
+                                    <td class="text-secondary">@(item.ItemDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                                    <td>
+                                        <span class="badge bg-azure-lt">@(item.ItemType ?? "—")</span>
+                                    </td>
+                                    <td>@(item.Description ?? "—")</td>
+                                    <td class="text-end">@item.Qty.ToString("N2")</td>
+                                    <td class="text-end text-secondary">@item.UnitCost.ToString("N2")</td>
+                                    <td class="text-end">@item.UnitSale.ToString("N2")</td>
+                                    <td class="text-end text-secondary">@item.TaxRate.ToString("N1")%</td>
+                                    <td class="text-end fw-medium">@item.LineTotal.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-group-divider">
+                            <tr>
+                                <td colspan="5"></td>
+                                <td class="text-end text-secondary small">Cost</td>
+                                <td class="text-end text-secondary">@q.TotalCost.ToString("N2")</td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="7"></td>
+                                <td class="text-end text-secondary small">Sale</td>
+                                <td class="text-end">@q.TotalSale.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <td colspan="7"></td>
+                                <td class="text-end text-secondary small">Tax</td>
+                                <td class="text-end text-secondary">@q.TotalTax.ToString("N2")</td>
+                            </tr>
+                            <tr class="fw-bold">
+                                <td colspan="7"></td>
+                                <td class="text-end">Grand Total</td>
+                                <td class="text-end text-primary fs-4">@q.CurrencyCode @q.GrandTotal.ToString("N2")</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        </div>
+
+        @* Terms *@
+        @if (q.Terms.Count > 0)
+        {
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Terms &amp; Conditions</h3></div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        @foreach (var t in q.Terms)
+                        {
+                            <li>@t.TermsText</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* Right: summary *@
+    <div class="col-lg-4">
+        <div class="card mb-3 border-primary">
+            <div class="card-header bg-primary-lt">
+                <h3 class="card-title text-primary">Financial Summary</h3>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-secondary">Total Cost</span>
+                    <span class="text-muted">@q.CurrencyCode @q.TotalCost.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-secondary">Total Sale</span>
+                    <span>@q.CurrencyCode @q.TotalSale.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-secondary">Tax</span>
+                    <span class="text-muted">@q.CurrencyCode @q.TotalTax.ToString("N2")</span>
+                </div>
+                <hr/>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Grand Total</strong>
+                    <strong class="text-primary fs-3">@q.CurrencyCode @q.GrandTotal.ToString("N2")</strong>
+                </div>
+                @if (q.TotalCost > 0)
+                {
+                    var margin = Math.Round((q.TotalSale - q.TotalCost) / q.TotalCost * 100, 1);
+                    var marginColor = margin >= 20 ? "success" : margin >= 10 ? "warning" : "danger";
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Margin</span>
+                        <span class="text-@marginColor">@margin%</span>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-@marginColor" style="width:@(Math.Min((double)margin, 100))%"></div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Status workflow *@
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Status</h3></div>
+            <div class="card-body">
+                @{
+                    var statuses = QuoteStatus.All;
+                    var currentIdx = Array.IndexOf(statuses, q.Status);
+                }
+                <ul class="steps steps-vertical mb-0">
+                    @foreach (var s in new[] { QuoteStatus.Draft, QuoteStatus.Sent, QuoteStatus.Approved })
+                    {
+                        var isDone = (s == QuoteStatus.Draft && currentIdx >= 0) ||
+                                     (s == QuoteStatus.Sent && currentIdx >= 1) ||
+                                     (s == QuoteStatus.Approved && (q.Status == QuoteStatus.Approved || q.Status == QuoteStatus.Won));
+                        var isCurrent = q.Status == s;
+                        <li class="step-item @(isDone ? "active" : "") @(isCurrent ? "step-item-active" : "")">
+                            <div class="h4 m-0">@s</div>
+                        </li>
+                    }
+                </ul>
+
+                @if (q.Status == QuoteStatus.Won || q.Status == QuoteStatus.Lost || q.Status == QuoteStatus.Rejected || q.Status == QuoteStatus.Expired)
+                {
+                    <div class="mt-3 alert alert-@(q.Status == QuoteStatus.Won ? "success" : "danger") py-2 mb-0">
+                        <strong>@q.Status</strong>
+                    </div>
+                }
+
+                @if (Model.CanEdit && q.Status != QuoteStatus.Won && q.Status != QuoteStatus.Lost)
+                {
+                    <div class="mt-3 pt-3 border-top">
+                        <p class="text-secondary small mb-2">Change status manually:</p>
+                        <form method="post" action="@pathBase/quotes/@q.Id/status">
+                            @Html.AntiForgeryToken()
+                            <div class="input-group">
+                                <select name="status" class="form-select form-select-sm">
+                                    @foreach (var s in QuoteStatus.All)
+                                    {
+                                        <option value="@s" selected="@(q.Status == s)">@s</option>
+                                    }
+                                </select>
+                                <button class="btn btn-sm btn-outline-secondary" type="submit">Update</button>
+                            </div>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

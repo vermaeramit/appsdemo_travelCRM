@@ -1,0 +1,135 @@
+@model QuoteIndexVm
+@{
+    ViewData["Title"] = "Quotes";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var totalPages = Model.Result.TotalPages == 0 ? 1 : Model.Result.TotalPages;
+    var canCreate = User.HasClaim("perm", Permissions.Quotes.Create) || User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title"><i class="ti ti-file-invoice me-2"></i>Quotes</h2>
+            <div class="text-secondary mt-1">@Model.Result.TotalCount quote(s)</div>
+        </div>
+        @if (canCreate)
+        {
+            <div class="col-auto">
+                <a href="@pathBase/quotes/new" class="btn btn-primary">
+                    <i class="ti ti-plus me-1"></i>New Quote
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <form method="get" class="card-body">
+        <div class="row g-2">
+            <div class="col-md-5">
+                <input name="search" value="@Model.Search" class="form-control"
+                       placeholder="Search by quote #, customer name…"/>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">All statuses</option>
+                    @foreach (var s in QuoteStatus.All)
+                    {
+                        <option value="@s" selected="@(Model.Status == s)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-outline-primary" type="submit"><i class="ti ti-search me-1"></i>Filter</button>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Status))
+            {
+                <div class="col-auto">
+                    <a href="@pathBase/quotes" class="btn btn-ghost-secondary">Clear</a>
+                </div>
+            }
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table card-table table-vcenter">
+            <thead>
+                <tr>
+                    <th>Quote #</th>
+                    <th>Customer</th>
+                    <th>Lead</th>
+                    <th>Status</th>
+                    <th>Valid Till</th>
+                    <th class="text-end">Grand Total</th>
+                    <th>Branch</th>
+                    <th>Created</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Result.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="9" class="text-center text-secondary py-5">
+                            No quotes match your filters.
+                            @if (canCreate) { <a href="@pathBase/quotes/new">Create the first one →</a> }
+                        </td>
+                    </tr>
+                }
+                @foreach (var q in Model.Result.Items)
+                {
+                    <tr>
+                        <td><a href="@pathBase/quotes/@q.Id" class="text-reset"><strong>@q.QuoteNo</strong></a></td>
+                        <td>@(q.CustomerName ?? "—")</td>
+                        <td>
+                            @if (q.LeadId.HasValue)
+                            {
+                                <a href="@pathBase/leads/@q.LeadId" class="text-secondary small">@(q.LeadNo ?? "Lead")</a>
+                            }
+                            else { <span class="text-secondary">—</span> }
+                        </td>
+                        <td><span class="badge bg-@(QuoteStatus.BadgeColor(q.Status))-lt">@q.Status</span></td>
+                        <td>
+                            @if (q.ValidTill.HasValue)
+                            {
+                                var expired = q.ValidTill.Value < DateOnly.FromDateTime(DateTime.Today);
+                                <span class="@(expired ? "text-danger" : "")">@q.ValidTill.Value.ToString("yyyy-MM-dd")</span>
+                            }
+                            else { <span class="text-secondary">—</span> }
+                        </td>
+                        <td class="text-end"><strong>@q.CurrencyCode @q.GrandTotal.ToString("N2")</strong></td>
+                        <td class="text-secondary">@(q.BranchName ?? "—")</td>
+                        <td><span class="text-secondary">@q.CreatedAt.ToString("yyyy-MM-dd")</span></td>
+                        <td class="text-end">
+                            <a href="@pathBase/quotes/@q.Id" class="btn btn-sm btn-ghost-primary" title="Open">
+                                <i class="ti ti-eye"></i>
+                            </a>
+                            <a href="@pathBase/quotes/@q.Id/edit" class="btn btn-sm btn-ghost-secondary" title="Edit">
+                                <i class="ti ti-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Result.TotalCount > Model.PageSize)
+    {
+        <div class="card-footer d-flex align-items-center">
+            <div class="text-secondary">Page @Model.Result.Page of @totalPages</div>
+            <ul class="pagination m-0 ms-auto">
+                @{
+                    string PageUrl(int p) => $"{pathBase}/quotes?search={Model.Search}&status={Model.Status}&page={p}&pageSize={Model.PageSize}";
+                }
+                <li class="page-item @(Model.Result.Page <= 1 ? "disabled" : "")">
+                    <a class="page-link" href="@PageUrl(Math.Max(1, Model.Result.Page - 1))">prev</a>
+                </li>
+                <li class="page-item @(Model.Result.Page >= totalPages ? "disabled" : "")">
+                    <a class="page-link" href="@PageUrl(Math.Min(totalPages, Model.Result.Page + 1))">next</a>
+                </li>
+            </ul>
+        </div>
+    }
+</div>
