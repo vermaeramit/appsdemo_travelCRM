@@ -1,18 +1,66 @@
 @model RoleListVm
-@{ ViewData["Title"] = "Roles"; }
-<div class="page-header"><h2 class="page-title">Roles & permissions</h2></div>
+@{
+    ViewData["Title"] = "Roles & Permissions";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var canManage = User.HasClaim("perm", Permissions.Roles.Manage) || User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Roles &amp; Permissions</h2>
+        </div>
+        <div class="col-auto">
+            @if (canManage)
+            {
+                <a href="@pathBase/roles/new" class="btn btn-primary">
+                    <i class="ti ti-plus me-1"></i>New Role
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <div class="card">
     <div class="table-responsive">
-        <table class="table card-table table-vcenter text-nowrap">
-            <thead><tr><th>Role</th><th>Description</th><th>System</th></tr></thead>
+        <table class="table table-vcenter table-hover card-table">
+            <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Description</th>
+                    <th>Type</th>
+                    <th class="w-1"></th>
+                </tr>
+            </thead>
             <tbody>
                 @foreach (var r in Model.Items)
                 {
                     <tr>
-                        <td><strong>@r.Name</strong></td>
-                        <td>@r.Description</td>
-                        <td>@(r.IsSystem ? "Yes" : "No")</td>
+                        <td>
+                            <a href="@pathBase/roles/@r.Id" class="text-reset fw-semibold">@r.Name</a>
+                        </td>
+                        <td class="text-secondary">@(r.Description ?? "—")</td>
+                        <td>
+                            @if (r.IsSystem)
+                            { <span class="badge bg-secondary-lt">System</span> }
+                            else
+                            { <span class="badge bg-blue-lt">Custom</span> }
+                        </td>
+                        <td>
+                            <a href="@pathBase/roles/@r.Id" class="btn btn-sm btn-ghost-secondary">View</a>
+                        </td>
                     </tr>
+                }
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="4" class="text-center text-secondary py-4">No roles defined.</td></tr>
                 }
             </tbody>
         </table>

@@ -1,0 +1,79 @@
+@model BranchListVm
+@{
+    ViewData["Title"] = "Branches";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var canManage = User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Branches</h2>
+        </div>
+        <div class="col-auto">
+            @if (canManage)
+            {
+                <a href="@pathBase/branches/new" class="btn btn-primary">
+                    <i class="ti ti-plus me-1"></i>New Branch
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-vcenter table-hover card-table">
+            <thead>
+                <tr>
+                    <th>Branch</th>
+                    <th>Code</th>
+                    <th>City / Country</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th class="w-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <strong>@b.Name</strong>
+                            @if (b.IsHeadOffice) { <span class="badge bg-azure-lt ms-1">HQ</span> }
+                        </td>
+                        <td class="text-secondary"><code>@b.Code</code></td>
+                        <td class="text-secondary">
+                            @if (!string.IsNullOrEmpty(b.City))
+                            { @b.City }
+                            @if (!string.IsNullOrEmpty(b.Country))
+                            { <span class="ms-1">@b.Country</span> }
+                        </td>
+                        <td class="text-secondary">@(b.Phone ?? "—")</td>
+                        <td>
+                            @if (b.IsActive) { <span class="badge bg-success-lt">Active</span> }
+                            else { <span class="badge bg-danger-lt">Inactive</span> }
+                        </td>
+                        <td>
+                            @if (canManage)
+                            {
+                                <a href="@pathBase/branches/@b.Id/edit" class="btn btn-sm btn-ghost-secondary">Edit</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-secondary py-4">No branches defined.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

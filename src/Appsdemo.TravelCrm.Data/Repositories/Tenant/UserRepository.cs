@@ -132,6 +132,34 @@ public sealed class UserRepository : IUserRepository
             ORDER BY r.name", new { userId });
         return rows.AsList();
     }
+
+    public async Task SetRolesAsync(Guid userId, IEnumerable<Guid> roleIds)
+    {
+        using var conn = _factory.Open();
+        using var tx = conn.BeginTransaction();
+        await conn.ExecuteAsync("DELETE FROM user_roles WHERE user_id = @userId", new { userId }, tx);
+        foreach (var roleId in roleIds.Distinct())
+            await conn.ExecuteAsync(
+                "INSERT INTO user_roles (user_id, role_id) VALUES (@userId, @roleId)",
+                new { userId, roleId }, tx);
+        tx.Commit();
+    }
+
+    public async Task SetActiveAsync(Guid id, bool isActive, Guid? updatedBy)
+    {
+        using var conn = _factory.Open();
+        await conn.ExecuteAsync(
+            "UPDATE users SET is_active = @isActive, updated_at = NOW(), updated_by = @updatedBy WHERE id = @id",
+            new { id, isActive, updatedBy });
+    }
+
+    public async Task UpdatePasswordAsync(Guid id, string passwordHash, Guid? updatedBy)
+    {
+        using var conn = _factory.Open();
+        await conn.ExecuteAsync(
+            "UPDATE users SET password_hash = @passwordHash, must_change_password = TRUE, updated_at = NOW(), updated_by = @updatedBy WHERE id = @id",
+            new { id, passwordHash, updatedBy });
+    }
 }
 
 public sealed class RoleRepository : IRoleRepository

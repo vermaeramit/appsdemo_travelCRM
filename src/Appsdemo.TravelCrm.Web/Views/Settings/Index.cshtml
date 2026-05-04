@@ -1,0 +1,107 @@
+@model Appsdemo.TravelCrm.Core.Multitenancy.TenantContext
+@{
+    ViewData["Title"] = "Settings";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Settings</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Account</h3></div>
+            <div class="card-body">
+                @if (Model is not null)
+                {
+                    <div class="mb-3">
+                        <div class="text-secondary small mb-1">Company Name</div>
+                        <div class="fw-semibold fs-4">@Model.CompanyName</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-secondary small mb-1">Tenant Code</div>
+                        <div><code>@Model.Code</code></div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-secondary small mb-1">Currency</div>
+                        <div><strong>@Model.Currency</strong></div>
+                    </div>
+                    <div class="mb-0">
+                        <div class="text-secondary small mb-1">Timezone</div>
+                        <div>@Model.Timezone</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-secondary">Tenant info unavailable.</div>
+                }
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header"><h3 class="card-title">Subscription</h3></div>
+            <div class="card-body">
+                @if (Model is not null)
+                {
+                    <div class="mb-3">
+                        <div class="text-secondary small mb-1">Plan</div>
+                        <div class="fw-semibold fs-4">@Model.PlanName</div>
+                    </div>
+                    @if (Model.Features.Count > 0)
+                    {
+                        <div class="mb-0">
+                            <div class="text-secondary small mb-2">Features</div>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var f in Model.Features)
+                                {
+                                    <span class="badge bg-blue-lt">@f.Key</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Management</h3></div>
+            <div class="list-group list-group-flush">
+                <a href="@pathBase/branches" class="list-group-item list-group-item-action">
+                    <i class="ti ti-building me-2 text-azure"></i>
+                    <div class="d-inline-block">
+                        <strong>Branches</strong>
+                        <div class="text-secondary small">Manage office branches</div>
+                    </div>
+                </a>
+                <a href="@pathBase/roles" class="list-group-item list-group-item-action">
+                    <i class="ti ti-shield me-2 text-purple"></i>
+                    <div class="d-inline-block">
+                        <strong>Roles &amp; Permissions</strong>
+                        <div class="text-secondary small">Control access levels</div>
+                    </div>
+                </a>
+                <a href="@pathBase/users" class="list-group-item list-group-item-action">
+                    <i class="ti ti-users me-2 text-teal"></i>
+                    <div class="d-inline-block">
+                        <strong>Users</strong>
+                        <div class="text-secondary small">Invite and manage users</div>
+                    </div>
+                </a>
+                <a href="@pathBase/audit" class="list-group-item list-group-item-action">
+                    <i class="ti ti-history me-2 text-secondary"></i>
+                    <div class="d-inline-block">
+                        <strong>Audit Log</strong>
+                        <div class="text-secondary small">Track all changes</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

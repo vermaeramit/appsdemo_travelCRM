@@ -1,0 +1,179 @@
+@model BookingDetailsVm
+@{
+    var bk = Model.Booking;
+    ViewData["Title"] = bk.BookingNo;
+    var pathBase = Context.Request.PathBase.Value ?? "";
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="text-secondary"><a href="@pathBase/bookings" class="text-reset"><i class="ti ti-arrow-left me-1"></i>Back to bookings</a></div>
+            <h2 class="page-title mt-1">
+                @bk.BookingNo
+                @{ var badgeColor = bk.Status switch {
+                    BookingStatus.Confirmed    => "bg-blue-lt",
+                    BookingStatus.InProgress   => "bg-yellow-lt",
+                    BookingStatus.Completed    => "bg-success-lt",
+                    BookingStatus.Cancelled    => "bg-danger-lt",
+                    _                          => "bg-secondary-lt"
+                }; }
+                <span class="badge @badgeColor ms-2">@bk.Status</span>
+            </h2>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            @if (bk.Status != BookingStatus.Cancelled && Model.CanEdit)
+            {
+                <a href="@pathBase/invoices/new?bookingId=@bk.Id" class="btn btn-outline-azure">
+                    <i class="ti ti-receipt me-1"></i>Create Invoice
+                </a>
+                <a href="@pathBase/bookings/@bk.Id/edit" class="btn btn-outline-primary">
+                    <i class="ti ti-pencil me-1"></i>Edit
+                </a>
+            }
+            @if (bk.Status != BookingStatus.Cancelled && Model.CanDelete)
+            {
+                <form method="post" action="@pathBase/bookings/@bk.Id/cancel"
+                      onsubmit="return confirm('Cancel this booking?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger">Cancel Booking</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><h3 class="card-title">Booking Info</h3></div>
+            <div class="card-body">
+                <div class="mb-2"><span class="text-secondary">Customer:</span> <strong>@bk.CustomerName</strong></div>
+                @if (!string.IsNullOrEmpty(Model.QuoteNo))
+                { <div class="mb-2"><span class="text-secondary">Quote:</span> <a href="@pathBase/quotes">@Model.QuoteNo</a></div> }
+                @if (bk.TravelStart.HasValue)
+                { <div class="mb-2"><span class="text-secondary">Travel Start:</span> @bk.TravelStart.Value.ToString("dd MMM yyyy")</div> }
+                @if (bk.TravelEnd.HasValue)
+                { <div class="mb-2"><span class="text-secondary">Travel End:</span> @bk.TravelEnd.Value.ToString("dd MMM yyyy")</div> }
+                @if (!string.IsNullOrEmpty(Model.BranchName))
+                { <div class="mb-2"><span class="text-secondary">Branch:</span> @Model.BranchName</div> }
+                <div class="mb-2"><span class="text-secondary">Currency:</span> @bk.CurrencyCode</div>
+                <div class="mb-0"><span class="text-secondary">Created:</span> @bk.CreatedAt.ToString("dd MMM yyyy")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><h3 class="card-title">Financials</h3></div>
+            <div class="card-body">
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-secondary">Total Amount</span>
+                    <strong>@bk.TotalAmount.ToString("N2")</strong>
+                </div>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-secondary">Paid</span>
+                    <span class="text-success">@bk.PaidAmount.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Balance</span>
+                    <span class="@(bk.BalanceAmount > 0 ? "text-danger fw-bold" : "text-success")">
+                        @bk.BalanceAmount.ToString("N2")
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (Model.CanEdit && bk.Status != BookingStatus.Cancelled)
+    {
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Change Status</h3></div>
+                <div class="card-body">
+                    <form method="post" action="@pathBase/bookings/@bk.Id/status">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-2">
+                            <select name="status" class="form-select">
+                                @foreach (var s in BookingStatus.All)
+                                {
+                                    <option value="@s" selected="@(bk.Status == s)">@s</option>
+                                }
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Update Status</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(bk.Notes))
+{
+    <div class="card mb-3">
+        <div class="card-header"><h3 class="card-title">Notes</h3></div>
+        <div class="card-body text-secondary">@bk.Notes</div>
+    </div>
+}
+
+@if (bk.Items.Count > 0)
+{
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Itinerary</h3></div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th class="text-end">Qty</th>
+                        <th class="text-end">Cost</th>
+                        <th class="text-end">Sale</th>
+                        <th class="text-end">Tax %</th>
+                        <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int? lastDay = null;
+                        foreach (var item in bk.Items.OrderBy(i => i.SortOrder))
+                        {
+                            if (item.DayNo.HasValue && item.DayNo != lastDay)
+                            {
+                                lastDay = item.DayNo;
+                                <tr class="bg-light">
+                                    <td colspan="9" class="fw-bold text-secondary small py-1 ps-3">Day @item.DayNo</td>
+                                </tr>
+                            }
+                            <tr>
+                                <td class="text-secondary">@(item.DayNo?.ToString() ?? "—")</td>
+                                <td class="text-secondary small">@(item.ItemDate?.ToString("dd MMM") ?? "")</td>
+                                <td><span class="badge bg-blue-lt">@item.ItemType</span></td>
+                                <td>@item.Description</td>
+                                <td class="text-end">@item.Qty</td>
+                                <td class="text-end text-secondary">@item.UnitCost.ToString("N2")</td>
+                                <td class="text-end">@item.UnitSale.ToString("N2")</td>
+                                <td class="text-end text-secondary">@item.TaxRate%</td>
+                                <td class="text-end fw-semibold">@item.LineTotal.ToString("N2")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td colspan="8" class="text-end">Grand Total</td>
+                        <td class="text-end">@bk.TotalAmount.ToString("N2")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+}

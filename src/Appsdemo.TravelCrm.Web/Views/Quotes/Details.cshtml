@@ -19,6 +19,12 @@
             </h2>
         </div>
         <div class="col-auto d-flex gap-2">
+            @if (q.Status == QuoteStatus.Approved || q.Status == QuoteStatus.Won)
+            {
+                <a href="@pathBase/bookings/new?quoteId=@q.Id" class="btn btn-outline-teal">
+                    <i class="ti ti-calendar-event me-1"></i>Create Booking
+                </a>
+            }
             @if (Model.CanEdit && q.Status == QuoteStatus.Draft)
             {
                 <a href="@pathBase/quotes/@q.Id/edit" class="btn btn-outline-primary">

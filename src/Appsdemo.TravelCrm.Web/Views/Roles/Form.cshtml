@@ -1,0 +1,98 @@
+@model RoleFormVm
+@{
+    var isEdit = Model.Id.HasValue;
+    ViewData["Title"] = isEdit ? $"Edit Role: {Model.Name}" : "New Role";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var formAction = isEdit ? $"{pathBase}/roles/{Model.Id}/edit" : $"{pathBase}/roles/new";
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="text-secondary">
+                @if (isEdit)
+                {
+                    <a href="@pathBase/roles/@Model.Id" class="text-reset"><i class="ti ti-arrow-left me-1"></i>Back to role</a>
+                }
+                else
+                {
+                    <a href="@pathBase/roles" class="text-reset"><i class="ti ti-arrow-left me-1"></i>Back to roles</a>
+                }
+            </div>
+            <h2 class="page-title mt-1">@(isEdit ? "Edit Permissions" : "New Role")</h2>
+        </div>
+    </div>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger mb-3">
+        <ul class="mb-0">
+            @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            { <li>@err.ErrorMessage</li> }
+        </ul>
+    </div>
+}
+
+<form method="post" action="@formAction">
+    @Html.AntiForgeryToken()
+    @if (isEdit) { <input type="hidden" name="Id" value="@Model.Id"/> }
+
+    @if (!isEdit)
+    {
+        <div class="card mb-3">
+            <div class="card-header"><h3 class="card-title">Role Info</h3></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label required">Role Name</label>
+                        <input name="Name" value="@Model.Name" class="form-control" required maxlength="100"/>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Description</label>
+                        <input name="Description" value="@Model.Description" class="form-control" maxlength="300"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Permissions</h3></div>
+        <div class="card-body">
+            @foreach (var group in Model.AllPermissions)
+            {
+                <div class="mb-4">
+                    <h4 class="mb-2 text-uppercase text-secondary small fw-bold letter-spacing-wide">@group.Key</h4>
+                    <div class="row g-2">
+                        @foreach (var perm in group)
+                        {
+                            <div class="col-sm-6 col-md-4 col-lg-3">
+                                <label class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="SelectedPermissions" value="@perm.Key"
+                                           @(Model.SelectedPermissions.Contains(perm.Key) ? "checked" : "")/>
+                                    <span class="form-check-label">@perm.Action</span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex mt-3">
+        @if (isEdit)
+        {
+            <a href="@pathBase/roles/@Model.Id" class="btn me-auto">Cancel</a>
+        }
+        else
+        {
+            <a href="@pathBase/roles" class="btn me-auto">Cancel</a>
+        }
+        <button type="submit" class="btn btn-primary">
+            <i class="ti ti-device-floppy me-1"></i>@(isEdit ? "Save Permissions" : "Create Role")
+        </button>
+    </div>
+</form>

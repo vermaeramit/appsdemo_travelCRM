@@ -14,6 +14,9 @@ public interface IUserRepository
     Task UpdateLoginFailureAsync(Guid id, int newFailedCount, DateTimeOffset? lockUntil);
     Task<IReadOnlyList<string>> GetPermissionsAsync(Guid userId);
     Task<IReadOnlyList<Role>> GetRolesAsync(Guid userId);
+    Task SetRolesAsync(Guid userId, IEnumerable<Guid> roleIds);
+    Task SetActiveAsync(Guid id, bool isActive, Guid? updatedBy);
+    Task UpdatePasswordAsync(Guid id, string passwordHash, Guid? updatedBy);
 }
 
 public interface IRoleRepository

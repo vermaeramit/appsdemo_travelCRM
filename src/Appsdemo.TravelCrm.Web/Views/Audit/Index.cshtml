@@ -1,0 +1,80 @@
+@model AuditIndexVm
+@{
+    ViewData["Title"] = "Audit Log";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Audit Log</h2>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form method="get" class="d-flex gap-2 flex-wrap">
+            <input name="search" value="@Model.Search" class="form-control w-auto"
+                   placeholder="Search actor or entity ID..."/>
+            <input name="entity" value="@Model.Entity" class="form-control w-auto"
+                   placeholder="Entity (e.g. leads, quotes)"/>
+            <button class="btn">Filter</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Entity))
+            {
+                <a href="@pathBase/audit" class="btn btn-ghost-secondary">Clear</a>
+            }
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table table-sm">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>Entity ID</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in Model.Result.Items)
+                {
+                    <tr>
+                        <td class="text-secondary small text-nowrap">
+                            @entry.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                        </td>
+                        <td>
+                            <div class="small">@entry.ActorEmail</div>
+                        </td>
+                        <td>
+                            <code class="small">@entry.Action</code>
+                        </td>
+                        <td class="text-secondary small">@entry.Entity</td>
+                        <td class="text-secondary small"><code>@entry.EntityId</code></td>
+                        <td class="text-secondary small">@(entry.Ip ?? "—")</td>
+                    </tr>
+                }
+                @if (Model.Result.Items.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center text-secondary py-4">No audit entries found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Result.TotalPages > 1)
+    {
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-secondary">@Model.Result.TotalCount entries</p>
+            <ul class="pagination m-0 ms-auto">
+                @for (var p = 1; p <= Model.Result.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" href="?page=@p&search=@Model.Search&entity=@Model.Entity">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>

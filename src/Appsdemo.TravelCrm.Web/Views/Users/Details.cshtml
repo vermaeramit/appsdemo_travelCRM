@@ -1,0 +1,94 @@
+@model UserDetailsVm
+@{
+    var u = Model.User;
+    ViewData["Title"] = u.FullName;
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var canEdit = User.HasClaim("perm", Permissions.Users.Edit) || User.IsInRole(SystemRoles.TenantAdmin);
+    var canReset = User.HasClaim("perm", Permissions.Users.ResetPassword) || User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="text-secondary"><a href="@pathBase/users" class="text-reset"><i class="ti ti-arrow-left me-1"></i>Back to users</a></div>
+            <h2 class="page-title mt-1">
+                @u.FullName
+                @if (!u.IsActive) { <span class="badge bg-danger-lt ms-2">Inactive</span> }
+                @if (u.MustChangePassword) { <span class="badge bg-warning-lt ms-1">Must change password</span> }
+            </h2>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            @if (canReset)
+            {
+                <a href="@pathBase/users/@u.Id/reset-password" class="btn btn-outline-warning">
+                    <i class="ti ti-key me-1"></i>Reset Password
+                </a>
+            }
+            @if (canEdit)
+            {
+                <a href="@pathBase/users/@u.Id/edit" class="btn btn-outline-primary">
+                    <i class="ti ti-pencil me-1"></i>Edit
+                </a>
+                <form method="post" action="@pathBase/users/@u.Id/toggle-active" class="d-inline"
+                      onsubmit="return confirm('@(u.IsActive ? "Deactivate" : "Activate") this user?');">
+                    @Html.AntiForgeryToken()
+                    <button class="btn @(u.IsActive ? "btn-outline-danger" : "btn-outline-success")" type="submit">
+                        @(u.IsActive ? "Deactivate" : "Activate")
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Profile</h3></div>
+            <div class="card-body">
+                <div class="mb-2"><span class="text-secondary">Email:</span> @u.Email</div>
+                @if (!string.IsNullOrEmpty(u.Username))
+                { <div class="mb-2"><span class="text-secondary">Username:</span> @u.Username</div> }
+                @if (!string.IsNullOrEmpty(u.Phone))
+                { <div class="mb-2"><span class="text-secondary">Phone:</span> @u.Phone</div> }
+                <div class="mb-2"><span class="text-secondary">Branch:</span> @(Model.BranchName ?? "—")</div>
+                <div class="mb-2"><span class="text-secondary">Status:</span>
+                    @if (u.IsActive) { <span class="badge bg-success-lt">Active</span> }
+                    else { <span class="badge bg-danger-lt">Inactive</span> }
+                </div>
+                @if (u.LastLoginAt.HasValue)
+                { <div class="mb-2"><span class="text-secondary">Last login:</span> @u.LastLoginAt.Value.ToString("yyyy-MM-dd HH:mm")</div> }
+                <div class="mb-0"><span class="text-secondary">Created:</span> @u.CreatedAt.ToString("yyyy-MM-dd")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Assigned Roles</h3></div>
+            <div class="card-body">
+                @if (Model.Roles.Count == 0)
+                {
+                    <div class="text-secondary">No roles assigned.</div>
+                }
+                else
+                {
+                    @foreach (var role in Model.Roles)
+                    {
+                        <div class="mb-2">
+                            <a href="@pathBase/roles/@role.Id" class="badge bg-blue-lt text-reset fs-6">@role.Name</a>
+                            @if (!string.IsNullOrEmpty(role.Description))
+                            { <span class="text-secondary small ms-2">@role.Description</span> }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,182 @@
+@model InvoiceDetailsVm
+@{
+    var inv = Model.Invoice;
+    ViewData["Title"] = inv.InvoiceNo;
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var isOverdue = inv.DueDate.HasValue && inv.DueDate < DateOnly.FromDateTime(DateTime.Today) && inv.Status != InvoiceStatus.Paid;
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="text-secondary"><a href="@pathBase/invoices" class="text-reset"><i class="ti ti-arrow-left me-1"></i>Back to invoices</a></div>
+            <h2 class="page-title mt-1">
+                @inv.InvoiceNo
+                @{ var badgeColor = inv.Status switch {
+                    InvoiceStatus.Draft     => "bg-secondary-lt",
+                    InvoiceStatus.Sent      => "bg-blue-lt",
+                    InvoiceStatus.Paid      => "bg-success-lt",
+                    InvoiceStatus.Overdue   => "bg-danger-lt",
+                    InvoiceStatus.Cancelled => "bg-secondary-lt",
+                    _                       => "bg-secondary-lt"
+                }; }
+                <span class="badge @badgeColor ms-2">@inv.Status</span>
+                @if (isOverdue) { <span class="badge bg-danger ms-1">Overdue</span> }
+            </h2>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            @if (Model.CanEdit && inv.Status != InvoiceStatus.Cancelled)
+            {
+                <a href="@pathBase/invoices/@inv.Id/edit" class="btn btn-outline-primary">
+                    <i class="ti ti-pencil me-1"></i>Edit
+                </a>
+            }
+            @if (Model.CanDelete && inv.Status == InvoiceStatus.Draft)
+            {
+                <form method="post" action="@pathBase/invoices/@inv.Id/delete"
+                      onsubmit="return confirm('Delete this invoice?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger">Delete</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><h3 class="card-title">Invoice Info</h3></div>
+            <div class="card-body">
+                <div class="mb-2"><span class="text-secondary">Customer:</span> <strong>@inv.CustomerName</strong></div>
+                @if (!string.IsNullOrEmpty(inv.CustomerGstin))
+                { <div class="mb-2"><span class="text-secondary">GSTIN:</span> <code>@inv.CustomerGstin</code></div> }
+                @if (!string.IsNullOrEmpty(Model.BookingNo))
+                { <div class="mb-2"><span class="text-secondary">Booking:</span> @Model.BookingNo</div> }
+                <div class="mb-2"><span class="text-secondary">Invoice Date:</span> @inv.InvoiceDate.ToString("dd MMM yyyy")</div>
+                @if (inv.DueDate.HasValue)
+                {
+                    <div class="mb-2">
+                        <span class="text-secondary">Due Date:</span>
+                        <span class="@(isOverdue ? "text-danger fw-bold" : "")">
+                            @inv.DueDate.Value.ToString("dd MMM yyyy")
+                        </span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.BranchName))
+                { <div class="mb-2"><span class="text-secondary">Branch:</span> @Model.BranchName</div> }
+                <div class="mb-0"><span class="text-secondary">Currency:</span> @inv.CurrencyCode</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><h3 class="card-title">Amount Summary</h3></div>
+            <div class="card-body">
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-secondary">Sub Total</span>
+                    <span>@inv.SubTotal.ToString("N2")</span>
+                </div>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-secondary">Tax</span>
+                    <span>@inv.TaxTotal.ToString("N2")</span>
+                </div>
+                <hr/>
+                <div class="d-flex justify-content-between fw-bold fs-4">
+                    <span>Grand Total</span>
+                    <span>@inv.GrandTotal.ToString("N2")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (Model.CanEdit && inv.Status != InvoiceStatus.Cancelled)
+    {
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Change Status</h3></div>
+                <div class="card-body">
+                    <form method="post" action="@pathBase/invoices/@inv.Id/status">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-2">
+                            <select name="status" class="form-select">
+                                @foreach (var s in InvoiceStatus.All)
+                                {
+                                    <option value="@s" selected="@(inv.Status == s)">@s</option>
+                                }
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Update Status</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(inv.Notes))
+{
+    <div class="card mb-3">
+        <div class="card-header"><h3 class="card-title">Notes</h3></div>
+        <div class="card-body text-secondary">@inv.Notes</div>
+    </div>
+}
+
+@if (inv.Items.Count > 0)
+{
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Line Items</h3></div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>HSN/SAC</th>
+                        <th class="text-end">Qty</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Tax %</th>
+                        <th class="text-end">Tax Amt</th>
+                        <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in inv.Items.OrderBy(i => i.SortOrder))
+                    {
+                        var taxAmt = item.Qty * item.UnitPrice * item.TaxRate / 100m;
+                        <tr>
+                            <td>@item.Description</td>
+                            <td class="text-secondary">@(item.HsnSac ?? "—")</td>
+                            <td class="text-end">@item.Qty</td>
+                            <td class="text-end">@item.UnitPrice.ToString("N2")</td>
+                            <td class="text-end text-secondary">@item.TaxRate%</td>
+                            <td class="text-end text-secondary">@taxAmt.ToString("N2")</td>
+                            <td class="text-end fw-semibold">@item.LineTotal.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" class="text-end text-secondary">Sub Total</td>
+                        <td></td>
+                        <td class="text-end">@inv.SubTotal.ToString("N2")</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-end text-secondary">Tax</td>
+                        <td class="text-end text-secondary">@inv.TaxTotal.ToString("N2")</td>
+                        <td class="text-end">@inv.TaxTotal.ToString("N2")</td>
+                    </tr>
+                    <tr class="fw-bold">
+                        <td colspan="6" class="text-end">Grand Total</td>
+                        <td class="text-end fs-4">@inv.GrandTotal.ToString("N2")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+}

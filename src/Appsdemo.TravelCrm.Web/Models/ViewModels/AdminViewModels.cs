@@ -59,6 +59,19 @@ public sealed class DashboardVm
     public int QuotesThisMonth { get; set; }
     public int BookingsThisMonth { get; set; }
     public decimal RevenueThisMonth { get; set; }
+    public int ActiveLeads { get; set; }
+    public int OpenQuotes { get; set; }
+    public int ConfirmedBookings { get; set; }
+    public decimal TotalRevenue { get; set; }
+}
+
+public sealed class AuditIndexVm
+{
+    public string? Search { get; set; }
+    public string? Entity { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 50;
+    public Core.Common.PagedResult<Core.Models.Tenant.AuditLogEntry> Result { get; set; } = new();
 }
 
 public sealed class UserListVm

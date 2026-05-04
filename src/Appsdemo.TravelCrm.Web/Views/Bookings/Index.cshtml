@@ -1,0 +1,113 @@
+@model BookingIndexVm
+@{
+    ViewData["Title"] = "Bookings";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var canCreate = User.HasClaim("perm", Permissions.Bookings.Create) || User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Bookings</h2>
+        </div>
+        <div class="col-auto">
+            @if (canCreate)
+            {
+                <a href="@pathBase/bookings/new" class="btn btn-primary">
+                    <i class="ti ti-plus me-1"></i>New Booking
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <form method="get" class="d-flex gap-2 flex-wrap">
+            <input name="search" value="@Model.Search" class="form-control w-auto"
+                   placeholder="Search booking # or customer..."/>
+            <select name="status" class="form-select w-auto">
+                <option value="">All status</option>
+                @foreach (var s in BookingStatus.All)
+                {
+                    <option value="@s" selected="@(Model.Status == s)">@s</option>
+                }
+            </select>
+            <button class="btn">Filter</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Status))
+            {
+                <a href="@pathBase/bookings" class="btn btn-ghost-secondary">Clear</a>
+            }
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter table-hover card-table">
+            <thead>
+                <tr>
+                    <th>Booking #</th>
+                    <th>Customer</th>
+                    <th>Travel Dates</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th class="w-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.Result.Items)
+                {
+                    <tr>
+                        <td>
+                            <a href="@pathBase/bookings/@b.Id" class="text-reset fw-semibold">@b.BookingNo</a>
+                        </td>
+                        <td>@b.CustomerName</td>
+                        <td class="text-secondary">
+                            @if (b.TravelStart.HasValue)
+                            { @b.TravelStart.Value.ToString("dd MMM yyyy") }
+                            @if (b.TravelEnd.HasValue)
+                            { <span> &ndash; @b.TravelEnd.Value.ToString("dd MMM yyyy")</span> }
+                        </td>
+                        <td class="fw-semibold">@b.TotalAmount.ToString("N2")</td>
+                        <td>
+                            @{ var color = b.Status switch {
+                                BookingStatus.Confirmed    => "bg-blue-lt",
+                                BookingStatus.InProgress   => "bg-yellow-lt",
+                                BookingStatus.Completed    => "bg-success-lt",
+                                BookingStatus.Cancelled    => "bg-danger-lt",
+                                _                          => "bg-secondary-lt"
+                            }; }
+                            <span class="badge @color">@b.Status</span>
+                        </td>
+                        <td>
+                            <a href="@pathBase/bookings/@b.Id" class="btn btn-sm btn-ghost-secondary">View</a>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Result.Items.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center text-secondary py-4">No bookings found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Result.TotalPages > 1)
+    {
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-secondary">@Model.Result.TotalCount bookings</p>
+            <ul class="pagination m-0 ms-auto">
+                @for (var p = 1; p <= Model.Result.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" href="?page=@p&search=@Model.Search&status=@Model.Status">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>

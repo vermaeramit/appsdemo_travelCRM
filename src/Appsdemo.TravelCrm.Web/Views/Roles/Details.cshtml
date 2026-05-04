@@ -1,0 +1,75 @@
+@model RoleDetailsVm
+@{
+    ViewData["Title"] = Model.Role.Name;
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var canManage = User.HasClaim("perm", Permissions.Roles.Manage) || User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="text-secondary"><a href="@pathBase/roles" class="text-reset"><i class="ti ti-arrow-left me-1"></i>Back to roles</a></div>
+            <h2 class="page-title mt-1">
+                @Model.Role.Name
+                @if (Model.Role.IsSystem) { <span class="badge bg-secondary-lt ms-2">System</span> }
+            </h2>
+            @if (!string.IsNullOrEmpty(Model.Role.Description))
+            { <div class="text-secondary">@Model.Role.Description</div> }
+        </div>
+        <div class="col-auto">
+            @if (canManage && !Model.Role.IsSystem)
+            {
+                <a href="@pathBase/roles/@Model.Role.Id/edit" class="btn btn-outline-primary">
+                    <i class="ti ti-pencil me-1"></i>Edit Permissions
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Permissions</h3>
+        <div class="card-options">
+            <span class="text-secondary">@Model.PermissionKeys.Count granted</span>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (!Model.GroupedPermissions.Any())
+        {
+            <div class="text-secondary">No permissions defined.</div>
+        }
+        @foreach (var group in Model.GroupedPermissions)
+        {
+            <div class="mb-4">
+                <h4 class="mb-2 text-uppercase text-secondary small fw-bold letter-spacing-wide">@group.Key</h4>
+                <div class="row g-2">
+                    @foreach (var perm in group)
+                    {
+                        var granted = Model.PermissionKeys.Contains(perm.Key);
+                        <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="d-flex align-items-center gap-2">
+                                @if (granted)
+                                {
+                                    <span class="text-success"><i class="ti ti-circle-check"></i></span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted"><i class="ti ti-circle-x"></i></span>
+                                }
+                                <span class="@(granted ? "" : "text-muted")">@perm.Action</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

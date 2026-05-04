@@ -1,0 +1,113 @@
+@model InvoiceIndexVm
+@{
+    ViewData["Title"] = "Invoices";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var canCreate = User.HasClaim("perm", Permissions.Invoices.Create) || User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Invoices</h2>
+        </div>
+        <div class="col-auto">
+            @if (canCreate)
+            {
+                <a href="@pathBase/invoices/new" class="btn btn-primary">
+                    <i class="ti ti-plus me-1"></i>New Invoice
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <form method="get" class="d-flex gap-2 flex-wrap">
+            <input name="search" value="@Model.Search" class="form-control w-auto"
+                   placeholder="Search invoice # or customer..."/>
+            <select name="status" class="form-select w-auto">
+                <option value="">All status</option>
+                @foreach (var s in InvoiceStatus.All)
+                {
+                    <option value="@s" selected="@(Model.Status == s)">@s</option>
+                }
+            </select>
+            <button class="btn">Filter</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Status))
+            {
+                <a href="@pathBase/invoices" class="btn btn-ghost-secondary">Clear</a>
+            }
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter table-hover card-table">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Due Date</th>
+                    <th class="text-end">Amount</th>
+                    <th>Status</th>
+                    <th class="w-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var inv in Model.Result.Items)
+                {
+                    <tr>
+                        <td>
+                            <a href="@pathBase/invoices/@inv.Id" class="text-reset fw-semibold">@inv.InvoiceNo</a>
+                        </td>
+                        <td>@inv.CustomerName</td>
+                        <td class="text-secondary">@inv.InvoiceDate.ToString("dd MMM yyyy")</td>
+                        <td class="@(inv.DueDate.HasValue && inv.DueDate < DateOnly.FromDateTime(DateTime.Today) && inv.Status != InvoiceStatus.Paid ? "text-danger" : "text-secondary")">
+                            @(inv.DueDate?.ToString("dd MMM yyyy") ?? "—")
+                        </td>
+                        <td class="text-end fw-semibold">@inv.GrandTotal.ToString("N2")</td>
+                        <td>
+                            @{ var color = inv.Status switch {
+                                InvoiceStatus.Draft     => "bg-secondary-lt",
+                                InvoiceStatus.Sent      => "bg-blue-lt",
+                                InvoiceStatus.Paid      => "bg-success-lt",
+                                InvoiceStatus.Overdue   => "bg-danger-lt",
+                                InvoiceStatus.Cancelled => "bg-secondary-lt",
+                                _                       => "bg-secondary-lt"
+                            }; }
+                            <span class="badge @color">@inv.Status</span>
+                        </td>
+                        <td>
+                            <a href="@pathBase/invoices/@inv.Id" class="btn btn-sm btn-ghost-secondary">View</a>
+                        </td>
+                    </tr>
+                }
+                @if (Model.Result.Items.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center text-secondary py-4">No invoices found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Result.TotalPages > 1)
+    {
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-secondary">@Model.Result.TotalCount invoices</p>
+            <ul class="pagination m-0 ms-auto">
+                @for (var p = 1; p <= Model.Result.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" href="?page=@p&search=@Model.Search&status=@Model.Status">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>

@@ -1,0 +1,111 @@
+@model PaymentIndexVm
+@{
+    ViewData["Title"] = "Payments";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var canCreate = User.HasClaim("perm", Permissions.Payments.Create) || User.IsInRole(SystemRoles.TenantAdmin);
+    var canDelete = User.HasClaim("perm", Permissions.Payments.Delete) || User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Payments</h2>
+        </div>
+        <div class="col-auto">
+            @if (canCreate)
+            {
+                <a href="@pathBase/payments/new" class="btn btn-primary">
+                    <i class="ti ti-plus me-1"></i>Record Payment
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible mb-3">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <form method="get" class="d-flex gap-2 flex-wrap">
+            <input name="search" value="@Model.Search" class="form-control w-auto"
+                   placeholder="Search payment # or reference..."/>
+            <select name="mode" class="form-select w-auto">
+                <option value="">All modes</option>
+                @foreach (var m in PaymentMode.All)
+                {
+                    <option value="@m" selected="@(Model.Mode == m)">@m</option>
+                }
+            </select>
+            <button class="btn">Filter</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.Mode))
+            {
+                <a href="@pathBase/payments" class="btn btn-ghost-secondary">Clear</a>
+            }
+        </form>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter table-hover card-table">
+            <thead>
+                <tr>
+                    <th>Payment #</th>
+                    <th>Date</th>
+                    <th>Mode</th>
+                    <th>Reference</th>
+                    <th class="text-end">Amount</th>
+                    <th>Notes</th>
+                    @if (canDelete) { <th class="w-1"></th> }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Result.Items)
+                {
+                    <tr>
+                        <td class="fw-semibold">@p.PaymentNo</td>
+                        <td class="text-secondary">@p.PaymentDate.ToString("dd MMM yyyy")</td>
+                        <td><span class="badge bg-blue-lt">@p.Mode</span></td>
+                        <td class="text-secondary">@(p.ReferenceNo ?? "—")</td>
+                        <td class="text-end fw-semibold">@p.CurrencyCode @p.Amount.ToString("N2")</td>
+                        <td class="text-secondary small">@(p.Notes ?? "")</td>
+                        @if (canDelete)
+                        {
+                            <td>
+                                <form method="post" action="@pathBase/payments/@p.Id/delete"
+                                      onsubmit="return confirm('Delete this payment record?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-ghost-danger">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (Model.Result.Items.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@(canDelete ? 7 : 6)" class="text-center text-secondary py-4">No payments found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Result.TotalPages > 1)
+    {
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-secondary">@Model.Result.TotalCount payments</p>
+            <ul class="pagination m-0 ms-auto">
+                @for (var p = 1; p <= Model.Result.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" href="?page=@p&search=@Model.Search&mode=@Model.Mode">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>

@@ -1,36 +1,97 @@
 @model UserListVm
-@{ ViewData["Title"] = "Users"; }
-<div class="page-header"><h2 class="page-title">Users</h2></div>
+@{
+    ViewData["Title"] = "Users";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var canCreate = User.HasClaim("perm", Permissions.Users.Create) || User.IsInRole(SystemRoles.TenantAdmin);
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <h2 class="page-title">Users</h2>
+        </div>
+        <div class="col-auto">
+            @if (canCreate)
+            {
+                <a href="@pathBase/users/new" class="btn btn-primary">
+                    <i class="ti ti-user-plus me-1"></i>Invite User
+                </a>
+            }
+        </div>
+    </div>
+</div>
 
 <div class="card">
-    <div class="card-body border-bottom py-3">
-        <form method="get">
-            <div class="d-flex">
-                <input name="search" value="@Model.Search" class="form-control" placeholder="Search by name, email, username"/>
-                <button class="btn btn-outline-primary ms-2" type="submit">Search</button>
-            </div>
+    <div class="card-header">
+        <form method="get" class="d-flex gap-2 flex-wrap">
+            <input name="search" value="@Model.Search" class="form-control w-auto"
+                   placeholder="Search name or email..."/>
+            <button class="btn">Filter</button>
+            @if (!string.IsNullOrEmpty(Model.Search))
+            {
+                <a href="@pathBase/users" class="btn btn-ghost-secondary">Clear</a>
+            }
         </form>
     </div>
     <div class="table-responsive">
-        <table class="table card-table table-vcenter text-nowrap">
-            <thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Active</th><th>Last login</th></tr></thead>
+        <table class="table table-vcenter table-hover card-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email / Username</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th class="w-1"></th>
+                </tr>
+            </thead>
             <tbody>
-                @if (!Model.Items.Any())
-                {
-                    <tr><td colspan="5" class="text-center text-secondary py-4">No users yet.</td></tr>
-                }
                 @foreach (var u in Model.Items)
                 {
                     <tr>
-                        <td>@u.FullName</td>
-                        <td>@u.Email</td>
-                        <td>@u.Username</td>
-                        <td>@(u.IsActive ? "Yes" : "No")</td>
-                        <td>@(u.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        <td>
+                            <a href="@pathBase/users/@u.Id" class="text-reset fw-semibold">@u.FullName</a>
+                            @if (u.MustChangePassword)
+                            { <span class="badge bg-warning-lt ms-1 small">must change pw</span> }
+                        </td>
+                        <td class="text-secondary">
+                            @u.Email
+                            @if (!string.IsNullOrEmpty(u.Username))
+                            { <div class="small">@u.Username</div> }
+                        </td>
+                        <td>
+                            @if (u.IsActive) { <span class="badge bg-success-lt">Active</span> }
+                            else { <span class="badge bg-danger-lt">Inactive</span> }
+                        </td>
+                        <td class="text-secondary small">
+                            @(u.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "Never")
+                        </td>
+                        <td>
+                            <a href="@pathBase/users/@u.Id" class="btn btn-sm btn-ghost-secondary">View</a>
+                        </td>
                     </tr>
+                }
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="5" class="text-center text-secondary py-4">No users found.</td></tr>
                 }
             </tbody>
         </table>
     </div>
-    <div class="card-footer text-secondary">Total: <strong>@Model.TotalCount</strong></div>
+    @if (Model.TotalCount > Model.PageSize)
+    {
+        var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-secondary">
+                @Model.TotalCount users total
+            </p>
+            <ul class="pagination m-0 ms-auto">
+                @for (var p = 1; p <= totalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" href="?page=@p&search=@Model.Search">@p</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
 </div>

@@ -16,14 +16,6 @@ public abstract class PlaceholderController : Controller
     }
 }
 
-[Authorize, Route("bookings")]
-public sealed class BookingsController : PlaceholderController
-{
-    [HttpGet(""), HasPermission(Permissions.Bookings.View), RequireFeature(Features.ModuleBookings)]
-    public IActionResult Index() => ComingSoon("Bookings",
-        "Confirm itineraries and track operations.", "ti ti-calendar-event");
-}
-
 [Authorize, Route("vouchers")]
 public sealed class VouchersController : PlaceholderController
 {
@@ -32,52 +24,12 @@ public sealed class VouchersController : PlaceholderController
         "Generate supplier vouchers for hotels, transport, sightseeing.", "ti ti-ticket");
 }
 
-[Authorize, Route("invoices")]
-public sealed class InvoicesController : PlaceholderController
-{
-    [HttpGet(""), HasPermission(Permissions.Invoices.View), RequireFeature(Features.ModuleInvoices)]
-    public IActionResult Index() => ComingSoon("Invoices",
-        "Customer invoices with GST, ageing, and email.", "ti ti-receipt");
-}
-
-[Authorize, Route("payments")]
-public sealed class PaymentsController : PlaceholderController
-{
-    [HttpGet(""), HasPermission(Permissions.Payments.View), RequireFeature(Features.ModulePayments)]
-    public IActionResult Index() => ComingSoon("Payments",
-        "Record receipts, allocate to invoices, view ageing.", "ti ti-cash");
-}
-
 [Authorize, Route("reports")]
 public sealed class ReportsController : PlaceholderController
 {
     [HttpGet(""), HasPermission(Permissions.Reports.View), RequireFeature(Features.ModuleReports)]
     public IActionResult Index() => ComingSoon("Reports",
         "Sales, operations and financial reports.", "ti ti-chart-bar");
-}
-
-[Authorize, Route("branches")]
-public sealed class BranchesController : PlaceholderController
-{
-    [HttpGet(""), HasPermission(Permissions.Branches.View)]
-    public IActionResult Index() => ComingSoon("Branches",
-        "Manage branches, GSTINs and head-office settings.", "ti ti-building-bank");
-}
-
-[Authorize, Route("settings")]
-public sealed class SettingsController : PlaceholderController
-{
-    [HttpGet(""), HasPermission(Permissions.Settings.View)]
-    public IActionResult Index() => ComingSoon("Settings",
-        "Tenant preferences, number sequences, email templates.", "ti ti-adjustments");
-}
-
-[Authorize, Route("audit")]
-public sealed class AuditController : PlaceholderController
-{
-    [HttpGet(""), HasPermission(Permissions.Audit.View)]
-    public IActionResult Index() => ComingSoon("Audit Log",
-        "Every sensitive action, who did it, when, and from where.", "ti ti-history");
 }
 
 // ----- Master data sub-pages share one route prefix -----

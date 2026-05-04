@@ -1,37 +1,147 @@
 @model DashboardVm
 @{ ViewData["Title"] = "Dashboard"; }
+
 <div class="page-header">
-    <h2 class="page-title">Welcome to @Model.CompanyName</h2>
-    <small class="text-secondary">Plan: @Model.PlanName</small>
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="page-title">@Model.CompanyName</h2>
+            <div class="text-secondary">Plan: <strong>@Model.PlanName</strong></div>
+        </div>
+    </div>
 </div>
 
+@* This month KPIs *@
+<div class="row row-cards mb-3">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="subheader">Leads this month</div>
+                <div class="h1 mb-1">@Model.LeadsThisMonth</div>
+                <div class="text-muted small">@Model.ActiveLeads active in pipeline</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="subheader">Quotes this month</div>
+                <div class="h1 mb-1">@Model.QuotesThisMonth</div>
+                <div class="text-muted small">@Model.OpenQuotes open / pending</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="subheader">Bookings this month</div>
+                <div class="h1 mb-1">@Model.BookingsThisMonth</div>
+                <div class="text-muted small">@Model.ConfirmedBookings confirmed / in-progress</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-active">
+            <div class="card-body">
+                <div class="subheader">Revenue this month</div>
+                <div class="h1 mb-1 text-primary">@Model.RevenueThisMonth.ToString("N0")</div>
+                <div class="text-muted small">Total: @Model.TotalRevenue.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Quick actions *@
 <div class="row row-cards">
-    <div class="col-md-3"><div class="card"><div class="card-body">
-        <div class="subheader">Leads (this month)</div>
-        <div class="h1 mb-0">@Model.LeadsThisMonth</div>
-    </div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body">
-        <div class="subheader">Quotes (this month)</div>
-        <div class="h1 mb-0">@Model.QuotesThisMonth</div>
-    </div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body">
-        <div class="subheader">Bookings (this month)</div>
-        <div class="h1 mb-0">@Model.BookingsThisMonth</div>
-    </div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body">
-        <div class="subheader">Revenue (this month)</div>
-        <div class="h1 mb-0">@(Model.RevenueThisMonth.ToString("N0"))</div>
-    </div></div></div>
-</div>
-
-<div class="card mt-4">
-    <div class="card-body">
-        <h3 class="card-title">Get started</h3>
-        <ul>
-            <li>Create your first <strong>branch</strong> under Settings.</li>
-            <li>Invite users from the <a href="/users">Users</a> page.</li>
-            <li>Configure roles and permissions on the <a href="/roles">Roles</a> page.</li>
-            <li>Add destinations, hotels and suppliers under Master Data (coming soon).</li>
-        </ul>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Quick Actions</h3></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @{
+                        var pathBase = Context.Request.PathBase.Value ?? "";
+                        bool HasPerm(string p) => User.HasClaim("perm", p) || User.IsInRole(SystemRoles.TenantAdmin);
+                    }
+                    @if (HasPerm(Permissions.Leads.Create))
+                    {
+                        <div class="col-6 col-md-4">
+                            <a href="@pathBase/leads/new" class="btn btn-outline-primary w-100 py-3">
+                                <i class="ti ti-target-arrow d-block mb-1" style="font-size:1.5rem"></i>
+                                New Lead
+                            </a>
+                        </div>
+                    }
+                    @if (HasPerm(Permissions.Quotes.Create))
+                    {
+                        <div class="col-6 col-md-4">
+                            <a href="@pathBase/quotes/new" class="btn btn-outline-success w-100 py-3">
+                                <i class="ti ti-file-invoice d-block mb-1" style="font-size:1.5rem"></i>
+                                New Quote
+                            </a>
+                        </div>
+                    }
+                    @if (HasPerm(Permissions.Bookings.Create))
+                    {
+                        <div class="col-6 col-md-4">
+                            <a href="@pathBase/bookings/new" class="btn btn-outline-teal w-100 py-3">
+                                <i class="ti ti-calendar-event d-block mb-1" style="font-size:1.5rem"></i>
+                                New Booking
+                            </a>
+                        </div>
+                    }
+                    @if (HasPerm(Permissions.Invoices.Create))
+                    {
+                        <div class="col-6 col-md-4">
+                            <a href="@pathBase/invoices/new" class="btn btn-outline-azure w-100 py-3">
+                                <i class="ti ti-receipt d-block mb-1" style="font-size:1.5rem"></i>
+                                New Invoice
+                            </a>
+                        </div>
+                    }
+                    @if (HasPerm(Permissions.Payments.Create))
+                    {
+                        <div class="col-6 col-md-4">
+                            <a href="@pathBase/payments/new" class="btn btn-outline-orange w-100 py-3">
+                                <i class="ti ti-cash d-block mb-1" style="font-size:1.5rem"></i>
+                                Record Payment
+                            </a>
+                        </div>
+                    }
+                    @if (HasPerm(Permissions.Users.Create))
+                    {
+                        <div class="col-6 col-md-4">
+                            <a href="@pathBase/users/new" class="btn btn-outline-secondary w-100 py-3">
+                                <i class="ti ti-user-plus d-block mb-1" style="font-size:1.5rem"></i>
+                                Invite User
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Navigate</h3></div>
+            <div class="list-group list-group-flush">
+                <a href="@pathBase/leads" class="list-group-item list-group-item-action">
+                    <i class="ti ti-target-arrow me-2 text-primary"></i>Leads
+                </a>
+                <a href="@pathBase/quotes" class="list-group-item list-group-item-action">
+                    <i class="ti ti-file-invoice me-2 text-success"></i>Quotes
+                </a>
+                <a href="@pathBase/bookings" class="list-group-item list-group-item-action">
+                    <i class="ti ti-calendar-event me-2 text-teal"></i>Bookings
+                </a>
+                <a href="@pathBase/invoices" class="list-group-item list-group-item-action">
+                    <i class="ti ti-receipt me-2 text-azure"></i>Invoices
+                </a>
+                <a href="@pathBase/payments" class="list-group-item list-group-item-action">
+                    <i class="ti ti-cash me-2 text-orange"></i>Payments
+                </a>
+                <a href="@pathBase/users" class="list-group-item list-group-item-action">
+                    <i class="ti ti-users me-2 text-secondary"></i>Users &amp; Roles
+                </a>
+            </div>
+        </div>
     </div>
 </div>

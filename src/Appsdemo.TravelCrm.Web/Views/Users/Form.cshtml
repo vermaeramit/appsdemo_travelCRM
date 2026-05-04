@@ -1,0 +1,126 @@
+@model UserFormVm
+@{
+    var isEdit = Model.Id.HasValue;
+    ViewData["Title"] = isEdit ? "Edit User" : "Invite User";
+    var pathBase = Context.Request.PathBase.Value ?? "";
+    var formAction = isEdit ? $"{pathBase}/users/{Model.Id}/edit" : $"{pathBase}/users/new";
+}
+
+<div class="page-header">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <div class="text-secondary"><a href="@pathBase/users" class="text-reset"><i class="ti ti-arrow-left me-1"></i>Back to users</a></div>
+            <h2 class="page-title mt-1">@(isEdit ? $"Edit {Model.FullName}" : "Invite User")</h2>
+        </div>
+    </div>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger mb-3">
+        <ul class="mb-0">
+            @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            { <li>@err.ErrorMessage</li> }
+        </ul>
+    </div>
+}
+
+<form method="post" action="@formAction">
+    @Html.AntiForgeryToken()
+    @if (isEdit) { <input type="hidden" name="Id" value="@Model.Id"/> }
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card mb-3">
+                <div class="card-header"><h3 class="card-title">Profile</h3></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label required">Full Name</label>
+                            <input name="FullName" value="@Model.FullName" class="form-control" required maxlength="200"/>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input name="Phone" value="@Model.Phone" class="form-control" maxlength="30"/>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Email</label>
+                            <input type="email" name="Email" value="@Model.Email" class="form-control" required maxlength="150"
+                                   @(isEdit ? "readonly" : "")/>
+                            @if (isEdit) { <div class="form-text">Email cannot be changed.</div> }
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username <span class="text-secondary">(optional)</span></label>
+                            <input name="Username" value="@Model.Username" class="form-control" maxlength="50"
+                                   @(isEdit ? "readonly" : "") placeholder="Defaults to email"/>
+                        </div>
+                        @if (!isEdit)
+                        {
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required">Initial Password</label>
+                                <input type="password" name="Password" class="form-control" required minlength="8"
+                                       autocomplete="new-password"/>
+                                <div class="form-text">Minimum 8 characters. User will be prompted to change on first login.</div>
+                            </div>
+                        }
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Branch</label>
+                            <select name="BranchId" class="form-select">
+                                <option value="">— no branch —</option>
+                                @foreach (var b in Model.Branches)
+                                {
+                                    <option value="@b.Value" selected="@(Model.BranchId?.ToString() == b.Value)">@b.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-auto">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="IsActive" value="true"
+                                       @(Model.IsActive ? "checked" : "")/>
+                                <span class="form-check-label">Active</span>
+                            </label>
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="MustChangePassword" value="true"
+                                       @(Model.MustChangePassword ? "checked" : "")/>
+                                <span class="form-check-label">Must change password on login</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Roles</h3></div>
+                <div class="card-body">
+                    <div class="form-text mb-2">Assign one or more roles to this user. Permissions are inherited from roles.</div>
+                    @foreach (var role in Model.AllRoles)
+                    {
+                        <label class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox"
+                                   name="SelectedRoleIds" value="@role.Id"
+                                   @(Model.SelectedRoleIds.Contains(role.Id) ? "checked" : "")/>
+                            <span class="form-check-label">
+                                <strong>@role.Name</strong>
+                                @if (!string.IsNullOrEmpty(role.Description))
+                                { <span class="text-secondary d-block small">@role.Description</span> }
+                            </span>
+                        </label>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex mt-3">
+        <a href="@pathBase/users" class="btn me-auto">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+            <i class="ti ti-device-floppy me-1"></i>@(isEdit ? "Save Changes" : "Create User")
+        </button>
+    </div>
+</form>
